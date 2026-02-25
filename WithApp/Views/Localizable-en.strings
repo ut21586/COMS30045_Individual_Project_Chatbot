@@ -1,0 +1,12 @@
+"tab.home" = "Home";
+"tab.chat" = "Chat";
+"tab.report" = "Report";
+"tab.settings" = "Settings";
+"settings.title" = "Settings";
+"settings.language" = "Language";
+"settings.character" = "Character";
+"settings.textsize" = "Text Size";
+"settings.notifications" = "Notifications";
+"settings.devices" = "Devices";
+"settings.privacy" = "Privacy & Data";
+"settings.features" = "Features";

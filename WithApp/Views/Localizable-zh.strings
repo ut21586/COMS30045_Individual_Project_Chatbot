@@ -1,0 +1,12 @@
+"tab.home" = "主页";
+"tab.chat" = "对话";
+"tab.report" = "报告";
+"tab.settings" = "设置";
+"settings.title" = "设置";
+"settings.language" = "语言";
+"settings.character" = "角色";
+"settings.textsize" = "字体大小";
+"settings.notifications" = "通知";
+"settings.devices" = "设备";
+"settings.privacy" = "隐私和数据";
+"settings.features" = "功能";
