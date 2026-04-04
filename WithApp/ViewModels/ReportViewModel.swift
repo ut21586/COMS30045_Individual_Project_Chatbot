@@ -16,6 +16,16 @@ struct EnergyDataPoint: Identifiable {
     let label: String
 }
 
+// MARK: - Rhythm Data Point
+struct RhythmDataPoint: Identifiable {
+    let id: UUID
+    let timestamp: Date
+    let label: String
+    let moodScore: Double      // 0-100
+    let glucoseMmol: Double    // mmol/L
+    let heartRate: Int?
+}
+
 // MARK: - Timeline Event
 struct TimelineEvent: Identifiable {
     let id: UUID
@@ -40,6 +50,7 @@ struct TimelineEvent: Identifiable {
 // MARK: - Report View Model
 class ReportViewModel: ObservableObject {
     @Published var energyData: [EnergyDataPoint] = []
+    @Published var rhythmData: [RhythmDataPoint] = []
     @Published var timelineEvents: [TimelineEvent] = []
     @Published var dailyNarrative: String = ""
     @Published var insights: [Insight] = []
@@ -67,6 +78,7 @@ class ReportViewModel: ObservableObject {
     private func loadMockData() {
         // Generate energy data for the day
         generateEnergyData()
+        generateRhythmData()
         
         // Generate timeline events
         generateTimelineEvents()
@@ -100,6 +112,41 @@ class ReportViewModel: ObservableObject {
         }
         
         energyData = data
+    }
+
+    private func generateRhythmData() {
+        let calendar = Calendar.current
+        let now = Date()
+        var points: [RhythmDataPoint] = []
+
+        for hour in 6..<22 {
+            guard let timestamp = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: now) else {
+                continue
+            }
+            let moodBase = getBaseEnergy(for: hour)
+            let mood = min(95, max(15, moodBase + Double.random(in: -8...8)))
+            let glucose = max(3.9, min(11.2, 6.0 + Double.random(in: -1.3...1.7)))
+
+            let heartRate: Int?
+            switch hour {
+            case 10, 15, 19:
+                heartRate = Int.random(in: 96...112)
+            default:
+                heartRate = nil
+            }
+
+            points.append(
+                RhythmDataPoint(
+                    id: UUID(),
+                    timestamp: timestamp,
+                    label: "\(hour):00",
+                    moodScore: mood,
+                    glucoseMmol: glucose,
+                    heartRate: heartRate
+                )
+            )
+        }
+        rhythmData = points
     }
     
     private func getBaseEnergy(for hour: Int) -> Double {
@@ -146,7 +193,7 @@ class ReportViewModel: ObservableObject {
                 title: "午餐",
                 description: "补充能量！你的身体正在把美味的食物转化为能量。",
                 location: "绿叶咖啡馆",
-                glucoseValue: 8.2,
+                glucoseValue: 148,
                 mood: "有点饿但不错",
                 emoji: "😊",
                 eventType: .meal
@@ -168,7 +215,7 @@ class ReportViewModel: ObservableObject {
                 title: "晚餐",
                 description: "烤三文鱼配蔬菜",
                 location: "家里",
-                glucoseValue: 8.2,
+                glucoseValue: 142,
                 mood: "放松",
                 emoji: nil,
                 eventType: .meal
@@ -244,6 +291,40 @@ class ReportViewModel: ObservableObject {
             "消极": 1
         ]
     }
+
+    func averageGlucoseMmol(for period: TimePeriod) -> Double {
+        let base: Double
+        switch period {
+        case .day: base = 6.2
+        case .week: base = 6.6
+        case .month: base = 6.8
+        }
+        return base
+    }
+
+    func timeInRange(for period: TimePeriod) -> Double {
+        switch period {
+        case .day: return 81
+        case .week: return 78
+        case .month: return 75
+        }
+    }
+
+    func moodStability(for period: TimePeriod) -> Double {
+        switch period {
+        case .day: return 84
+        case .week: return 79
+        case .month: return 76
+        }
+    }
+
+    func elevatedHeartRateCount(for period: TimePeriod) -> Int {
+        switch period {
+        case .day: return rhythmData.filter { ($0.heartRate ?? 0) >= 95 }.count
+        case .week: return 9
+        case .month: return 37
+        }
+    }
     
     // MARK: - Reflective Questions
     func getReflectiveQuestion() -> ReflectiveQuestion {
@@ -312,4 +393,3 @@ struct ReflectiveQuestion: Identifiable {
         case activity
     }
 }
-

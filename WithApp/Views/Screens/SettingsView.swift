@@ -217,16 +217,6 @@ struct SettingsView: View {
                 subtitle: "22:00 - 7:00",
                 showChevron: true
             ) {}
-            
-            Divider().padding(.leading, 56)
-            
-            SettingsRow(
-                icon: "waveform.path",
-                iconColor: Color("AccentTeal"),
-                title: "触觉反馈",
-                subtitle: "已启用",
-                showChevron: true
-            ) {}
         }
     }
     
@@ -239,16 +229,7 @@ struct SettingsView: View {
                 title: "情感支持",
                 isOn: .constant(true)
             )
-            
-            Divider().padding(.leading, 56)
-            
-            SettingsToggleRow(
-                icon: "chart.line.uptrend.xyaxis",
-                iconColor: .blue,
-                title: "血糖预测",
-                isOn: .constant(true)
-            )
-            
+
             Divider().padding(.leading, 56)
             
             SettingsToggleRow(
