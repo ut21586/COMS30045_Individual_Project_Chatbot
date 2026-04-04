@@ -133,14 +133,8 @@ struct ChatView: View {
             
             Spacer()
             
-            Button(action: {}) {
-                HStack(spacing: 4) {
-                    Image(systemName: "doc.text")
-                    Text("故事")
-                }
-                .font(.system(size: 14))
-                .foregroundColor(.gray)
-            }
+            Color.clear
+                .frame(width: 24, height: 24)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
@@ -519,4 +513,3 @@ final class PreviewHealthManager: HealthManager {
         .environmentObject(chatViewModel)
         .environmentObject(healthManager)
 }
-
