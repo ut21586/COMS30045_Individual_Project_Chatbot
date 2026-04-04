@@ -64,12 +64,19 @@ class AppState: ObservableObject {
     @Published var contextMode: ContextMode = .private
     @Published var notificationsEnabled: Bool = true
     @Published var cgmConnected: Bool = false
+    @Published var showVideoAvatar: Bool {
+        didSet {
+            UserDefaults.standard.set(showVideoAvatar, forKey: "showVideoAvatar")
+        }
+    }
     
     init() {
         self.isOnboarded = UserDefaults.standard.bool(forKey: "isOnboarded")
         self.userName = UserDefaults.standard.string(forKey: "userName") ?? "User"
         let characterRaw = UserDefaults.standard.string(forKey: "selectedCharacter") ?? CharacterType.robot.rawValue
         self.selectedCharacter = CharacterType(rawValue: characterRaw) ?? .robot
+        
+        self.showVideoAvatar = UserDefaults.standard.object(forKey: "showVideoAvatar") as? Bool ?? false
         
         if let languageRaw = UserDefaults.standard.string(forKey: "appLanguage"),
            let language = AppLanguage(rawValue: languageRaw) {
