@@ -11,6 +11,7 @@ struct HomeView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var healthManager: HealthManager
     @EnvironmentObject var chatViewModel: ChatViewModel
+    @Binding var selectedTab: ContentView.Tab
     @Binding var showProfile: Bool
     
     @State private var currentMessage: SupportMessage = SupportMessage.defaultMessage
@@ -88,7 +89,7 @@ struct HomeView: View {
                     .font(.custom("Georgia", size: 32))
                     .fontWeight(.medium)
                 
-                Text("始终与你同行")
+                Text("不只看血糖数字，也关心你的感受")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundColor(.gray)
                     .tracking(2)
@@ -115,19 +116,11 @@ struct HomeView: View {
     // MARK: - Character Section
     private var characterSection: some View {
         VStack(spacing: 20) {
-            // Side Navigation Icons
+            // Side Navigation Icons removed: only Spacer, Character, Spacer
+            
             HStack {
-                // Left side icons
-                VStack(spacing: 16) {
-                    SideIconButton(icon: "calendar", action: {})
-                    SideIconButton(icon: "checkmark.circle", action: {})
-                    SideIconButton(icon: "face.smiling", action: {})
-                    SideIconButton(icon: "square.grid.2x2", action: {})
-                }
-                
                 Spacer()
                 
-                // Character
                 CharacterView(
                     character: appState.selectedCharacter,
                     isAnimating: $animateCharacter
@@ -139,11 +132,6 @@ struct HomeView: View {
                 }
                 
                 Spacer()
-                
-                // Placeholder for balance
-                VStack(spacing: 16) {
-                    Color.clear.frame(width: 44, height: 44)
-                }
             }
             .padding(.horizontal, 20)
             
@@ -197,16 +185,17 @@ struct HomeView: View {
     private var quickInputSuggestions: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
-                QuickInputChip(text: "我都不知道自己为什么难过。") {
-                    chatViewModel.sendMessage("我都不知道自己为什么难过。")
+                QuickInputChip(text: "今天状态还可以，记录一下") {
+                    navigateToChatAndSend("今天状态还可以，记录一下")
                 }
-                
-                QuickInputChip(text: "感觉压力很大。") {
-                    chatViewModel.sendMessage("感觉压力很大。")
+                QuickInputChip(text: "有点事情，想整理一下思绪") {
+                    navigateToChatAndSend("有点事情，想整理一下思绪")
                 }
-                
-                QuickInputChip(text: "\"今天感觉不错\"") {
-                    chatViewModel.sendMessage("今天感觉不错")
+                QuickInputChip(text: "今天的一个小开心") {
+                    navigateToChatAndSend("今天的一个小开心")
+                }
+                QuickInputChip(text: "给自己一个小目标") {
+                    navigateToChatAndSend("给自己一个小目标")
                 }
             }
             .padding(.horizontal, 20)
@@ -229,6 +218,13 @@ struct HomeView: View {
             withAnimation {
                 appState.contextMode = modes[nextIndex]
             }
+        }
+    }
+    
+    private func navigateToChatAndSend(_ text: String) {
+        withAnimation { selectedTab = .chat }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            chatViewModel.sendMessage(text)
         }
     }
 }
@@ -273,9 +269,8 @@ struct QuickInputChip: View {
 }
 
 #Preview {
-    HomeView(showProfile: .constant(false))
+    HomeView(selectedTab: .constant(.home), showProfile: .constant(false))
         .environmentObject(AppState())
         .environmentObject(HealthManager())
         .environmentObject(ChatViewModel())
 }
-

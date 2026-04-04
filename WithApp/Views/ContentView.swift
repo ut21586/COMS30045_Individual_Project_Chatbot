@@ -76,7 +76,7 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 // Content
                 TabView(selection: $selectedTab) {
-                    HomeView(showProfile: $showProfile)
+                    HomeView(selectedTab: $selectedTab, showProfile: $showProfile)
                         .tag(Tab.home)
                         .accessibilityLabel(ContentView.Tab.home.localizedTitle(for: appState.appLanguage))
                     
@@ -245,4 +245,3 @@ extension Color {
         .environment(\.locale, Locale(identifier: "zh-Hans"))
 }
 #endif
-
