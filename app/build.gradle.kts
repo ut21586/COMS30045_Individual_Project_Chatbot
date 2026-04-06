@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.withapp.With"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -61,5 +61,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     // Support for using ViewModels in Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
+    // Health Connect library
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha07")
 
 }

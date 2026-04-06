@@ -1,37 +1,46 @@
 package com.withapp.with.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight // 这行是修复报错的关键
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.unit.dp
 
-/**
- * Android version of the main character circle.
- * Displays "With" or a sparkle ✨ based on animation state.
- */
 @Composable
-fun CharacterView(modifier: Modifier = Modifier, isAnimating: Boolean = false) {
-    // Replicating the "With" emerald green color
-    val emeraldGreen = Color(0xFF008080)
+fun CharacterView(
+    modifier: Modifier = Modifier,
+    isAnimating: Boolean = true
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "robot")
 
-    Box(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(emeraldGreen),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = if (isAnimating) "✨" else "With",
-            color = Color.White,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold // 引用已修复
-        )
+    val bounce by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = -12f,
+        animationSpec = infiniteRepeatable(tween(1200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "bounce"
+    )
+
+    val blink by infiniteTransition.animateFloat(
+        initialValue = 1f, targetValue = 0.1f,
+        animationSpec = infiniteRepeatable(
+            keyframes { durationMillis = 3000; 1f at 0; 1f at 2800; 0.1f at 2900; 1f at 3000 },
+            repeatMode = RepeatMode.Restart
+        ), label = "blink"
+    )
+
+    Canvas(modifier = modifier.offset(y = bounce.dp)) {
+        val teal = Color(0xFF008080)
+        // Body
+        drawRoundRect(color = teal, size = Size(size.width, size.height), cornerRadius = CornerRadius(40f))
+        // Eyes
+        drawCircle(color = Color.Cyan, radius = 10f, center = Offset(size.width * 0.35f, size.height * 0.4f * blink))
+        drawCircle(color = Color.Cyan, radius = 10f, center = Offset(size.width * 0.65f, size.height * 0.4f * blink))
+        // Mouth
+        drawRect(color = Color.White.copy(0.8f), topLeft = Offset(size.width * 0.38f, size.height * 0.7f), size = Size(size.width * 0.24f, 4f))
     }
 }
