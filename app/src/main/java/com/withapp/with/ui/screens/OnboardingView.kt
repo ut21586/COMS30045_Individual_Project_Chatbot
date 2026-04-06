@@ -67,7 +67,7 @@ fun IntroSlides(onNext: () -> Unit) {
         Spacer(modifier = Modifier.height(40.dp))
         Text("你好，我是 With", fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
-        Text("我是你的 AI 伙伴，陪你一起面对糖尿病带来的起伏。", textAlign = TextAlign.Center, color = Color.Gray)
+        Text("我与你同在。", textAlign = TextAlign.Center, color = Color.Gray)
         Spacer(modifier = Modifier.height(60.dp))
         Button(
             onClick = onNext,
