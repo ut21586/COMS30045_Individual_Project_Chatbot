@@ -142,53 +142,142 @@
 //        }
 //    }
 //}
+
 package com.withapp.with.ui.screens
 
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight // FIXED: Correct import for AutoMirrored icon
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// Import custom UI components
+
+// Accessing global state for personalized experience
+import com.withapp.with.models.AppState
 import com.withapp.with.ui.components.CharacterView
 import com.withapp.with.ui.components.SupportMessageBubble
 
 @Composable
 fun HomeView(
-    safePadding: PaddingValues, // Required for alignment with MainContainer
+    appState: AppState,
+    @Suppress("UNUSED_PARAMETER") safePadding: PaddingValues,
     onNavigateToChat: (String) -> Unit,
     onRequestPermission: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
+    // Greeting logic matching the Apple version
+    val greeting = "你好, ${appState.userName}! 我是 With。作为${appState.diabetesType}伙伴，今天感觉如何？"
+
     Column(
-        modifier = Modifier.fillMaxSize().statusBarsPadding(),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .statusBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // App identity in Chinese
-        Text("With", fontSize = 32.sp, modifier = Modifier.padding(top = 20.dp))
-        Text("你的贴心健康伙伴", fontSize = 12.sp, color = Color.Gray)
+        // 1. iOS-style Header Section
+        HomeHeader()
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(40.dp))
 
-        // Main animated character
-        CharacterView(modifier = Modifier.size(200.dp))
+        // 2. Interactive Character Area
+        CharacterView(modifier = Modifier.size(180.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        SupportMessageBubble(message = greeting)
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
-        // Supportive message bubble in Chinese
-        SupportMessageBubble(message = "你好！今天准备好开始新的一天了吗？")
+        // 3. Daily Story Card (iOS Dashboard Style)
+        HomeStoryCard(onClick = { onNavigateToChat("查看今日故事") })
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Action button in Chinese
-        Button(
-            onClick = { onNavigateToChat("我想记录一下今天的血糖") },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF008080)),
-            modifier = Modifier.padding(bottom = 40.dp)
-        ) {
-            Text("开始对话", color = Color.White)
+        // 4. Horizontal Quick Action Bubbles
+        Text(
+            text = "你可以这样问我：",
+            fontSize = 12.sp,
+            color = Color.Gray,
+            modifier = Modifier.align(Alignment.Start).padding(start = 40.dp)
+        )
+        QuickSuggestionsRow(onSuggestionClick = onNavigateToChat)
+
+        Spacer(modifier = Modifier.height(100.dp)) // Safe area for floating tab bar
+    }
+}
+
+@Composable
+fun HomeHeader() {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // User profile placeholder with soft pink background
+        Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(0xFFFFC0CB).copy(alpha = 0.3f))) {
+            Icon(Icons.Default.Person, null, tint = Color(0xFFFF69B4), modifier = Modifier.align(Alignment.Center))
+        }
+        // Centered App Title
+        Text("With", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF333333))
+        // Weather/Status icon matching iOS design
+        Surface(modifier = Modifier.size(40.dp), shape = CircleShape, color = Color.White.copy(alpha = 0.6f)) {
+            Box(contentAlignment = Alignment.Center) { Text("☀️") }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeStoryCard(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.padding(horizontal = 32.dp).fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = Color.White,
+        shadowElevation = 2.dp
+    ) {
+        Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Book, null, tint = Color(0xFF008080))
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("你的故事", fontSize = 10.sp, color = Color.Gray)
+                Text("今日章节：平衡的艺术", fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            }
+            // FIXED: Using AutoMirrored version of KeyboardArrowRight
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = Color.LightGray)
+        }
+    }
+}
+
+@Composable
+fun QuickSuggestionsRow(onSuggestionClick: (String) -> Unit) {
+    val suggestions = listOf("我刚才吃了一顿大餐", "感觉压力有点大", "想看看血糖趋势", "打个招呼")
+    LazyRow(
+        modifier = Modifier.padding(vertical = 12.dp),
+        contentPadding = PaddingValues(horizontal = 32.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        items(suggestions) { text ->
+            Surface(
+                modifier = Modifier.clickable { onSuggestionClick(text) },
+                shape = RoundedCornerShape(18.dp),
+                color = Color.White.copy(alpha = 0.8f),
+                border = BorderStroke(1.dp, Color.White)
+            ) {
+                Text(text, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontSize = 13.sp, color = Color(0xFF008080))
+            }
         }
     }
 }

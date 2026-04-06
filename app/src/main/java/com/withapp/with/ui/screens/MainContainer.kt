@@ -91,11 +91,11 @@
 //        Text(label, fontSize = 10.sp, color = color)
 //    }
 //}
-
 package com.withapp.with.ui.screens
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.clickable // CRITICAL: Fixed the missing import from your screenshot
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -105,15 +105,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-// Imports for state and viewmodels. Ensure package names match your project.
+// Global state and ViewModels for data consistency
 import com.withapp.with.models.AppState
 import com.withapp.with.viewmodels.ChatViewModel
 import com.withapp.with.viewmodels.ReportViewModel
@@ -123,24 +123,34 @@ fun MainContainer(
     appState: AppState = viewModel(),
     onRequestPermission: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf("home") }
+    // Crossfade provides the smooth iOS-like transition between onboarding and the main app
+    Crossfade(targetState = appState.hasCompletedOnboarding, label = "app_flow") { completed ->
+        if (!completed) {
+            OnboardingView(appState = appState)
+        } else {
+            MainAppLayout(appState = appState, onRequestPermission = onRequestPermission)
+        }
+    }
+}
 
-    // Initialize ViewModels to persist data across navigation tabs
+@Composable
+fun MainAppLayout(appState: AppState, onRequestPermission: () -> Unit) {
+    var selectedTab by remember { mutableStateOf("home") }
     val chatViewModel: ChatViewModel = viewModel()
     val reportViewModel: ReportViewModel = viewModel()
 
-    // Background gradient matching the iOS aesthetic
+    // Mimicking the soft iOS gradient background
     val bgGradient = Brush.verticalGradient(
         colors = listOf(Color(0xFFF2F9F7), Color(0xFFE6F2F2))
     )
 
     Box(modifier = Modifier.fillMaxSize().background(bgGradient)) {
-        // Remove bottom padding in chat to allow full screen keyboard interaction
         val bottomPadding = if (selectedTab == "chat") 0.dp else 80.dp
 
         Box(modifier = Modifier.fillMaxSize().padding(bottom = bottomPadding)) {
             when (selectedTab) {
                 "home" -> HomeView(
+                    appState = appState,
                     safePadding = PaddingValues(0.dp),
                     onNavigateToChat = { msg ->
                         chatViewModel.sendMessage(msg)
@@ -148,31 +158,17 @@ fun MainContainer(
                     },
                     onRequestPermission = onRequestPermission
                 )
-                "chat" -> ChatView(
-                    chatViewModel = chatViewModel,
-                    onBack = { selectedTab = "home" }
-                )
-                "report" -> ReportView(
-                    reportViewModel = reportViewModel
-                )
-                "settings" -> SettingsView(
-                    appState = appState
-                )
+                "chat" -> ChatView(chatViewModel = chatViewModel, onBack = { selectedTab = "home" })
+                "report" -> ReportView(reportViewModel = reportViewModel)
+                "settings" -> SettingsView(appState = appState)
             }
         }
 
-        // Custom Floating Tab Bar: Hidden when chat is active
+        // Floating iOS-style Tab Bar with glassmorphism effect
         if (selectedTab != "chat") {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 20.dp, vertical = 24.dp)
-            ) {
+            Box(modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 20.dp, vertical = 24.dp)) {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp)
-                        .shadow(10.dp, RoundedCornerShape(32.dp)),
+                    modifier = Modifier.fillMaxWidth().height(64.dp).shadow(10.dp, RoundedCornerShape(32.dp)),
                     shape = RoundedCornerShape(32.dp),
                     color = Color.White.copy(alpha = 0.95f)
                 ) {
@@ -192,27 +188,30 @@ fun MainContainer(
     }
 }
 
-// Fixed the syntax error here. Modifier is now correctly chained.
 @Composable
 private fun TabItem(
-    icon: ImageVector,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
     val color = if (isSelected) Color(0xFF008080) else Color.Gray
-    // Creates a customized interaction source to disable the ripple effect
-    val interactionSource = remember { MutableInteractionSource() }
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            onClick = onClick
-        )
+        modifier = Modifier.clickableNoRipple(onClick)
     ) {
         Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(24.dp))
         Text(label, fontSize = 10.sp, color = color)
     }
+}
+
+// Stateful modifier to disable ripple and handle Composable context for 'remember'
+fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier = composed {
+    this.then(
+        Modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onClick = onClick
+        )
+    )
 }
