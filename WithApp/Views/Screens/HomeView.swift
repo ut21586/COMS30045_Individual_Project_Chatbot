@@ -12,7 +12,7 @@ struct HomeView: View {
     @EnvironmentObject var healthManager: HealthManager
     @EnvironmentObject var chatViewModel: ChatViewModel
     @Binding var selectedTab: ContentView.Tab
-    @Binding var showProfile: Bool
+    @Binding var showSettings: Bool
     
     @State private var currentMessage: SupportMessage = SupportMessage.defaultMessage
     @State private var showInputField = false
@@ -71,7 +71,7 @@ struct HomeView: View {
     private var headerView: some View {
         HStack {
             // Profile Button
-            Button(action: { showProfile = true }) {
+            Button(action: { showSettings = true }) {
                 Circle()
                     .fill(Color.pink.opacity(0.3))
                     .frame(width: 44, height: 44)
@@ -97,17 +97,9 @@ struct HomeView: View {
             
             Spacer()
             
-            // Context Mode Button
-            Button(action: { cycleContextMode() }) {
-                Circle()
-                    .fill(Color.white.opacity(0.8))
-                    .frame(width: 44, height: 44)
-                    .overlay(
-                        Image(systemName: appState.contextMode.icon)
-                            .foregroundColor(Color("AccentTeal"))
-                    )
-                    .shadow(color: .black.opacity(0.05), radius: 5)
-            }
+            // Keep header centered after removing context switch entry point.
+            Color.clear
+                .frame(width: 44, height: 44)
         }
         .padding(.horizontal, 20)
         .padding(.top, 10)
@@ -211,16 +203,6 @@ struct HomeView: View {
         )
     }
     
-    private func cycleContextMode() {
-        let modes = ContextMode.allCases
-        if let currentIndex = modes.firstIndex(of: appState.contextMode) {
-            let nextIndex = (currentIndex + 1) % modes.count
-            withAnimation {
-                appState.contextMode = modes[nextIndex]
-            }
-        }
-    }
-    
     private func navigateToChatAndSend(_ text: String) {
         withAnimation { selectedTab = .chat }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
@@ -269,7 +251,7 @@ struct QuickInputChip: View {
 }
 
 #Preview {
-    HomeView(selectedTab: .constant(.home), showProfile: .constant(false))
+    HomeView(selectedTab: .constant(.home), showSettings: .constant(false))
         .environmentObject(AppState())
         .environmentObject(HealthManager())
         .environmentObject(ChatViewModel())

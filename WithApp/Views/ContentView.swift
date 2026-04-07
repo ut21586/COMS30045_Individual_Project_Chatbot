@@ -14,24 +14,21 @@ import UIKit
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
     @State private var selectedTab: Tab = .home
-    @State private var showProfile = false
+    @State private var showSettings = false
     
     enum Tab {
         case home
         case chat
         case report
-        case settings
         
         func localizedTitle(for language: AppLanguage) -> String {
             switch (self, language) {
             case (.home, .chinese): return "主页"
             case (.chat, .chinese): return "对话"
             case (.report, .chinese): return "报告"
-            case (.settings, .chinese): return "设置"
             case (.home, .english): return "Home"
             case (.chat, .english): return "Chat"
             case (.report, .english): return "Report"
-            case (.settings, .english): return "Settings"
             }
         }
     }
@@ -76,7 +73,7 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 // Content
                 TabView(selection: $selectedTab) {
-                    HomeView(selectedTab: $selectedTab, showProfile: $showProfile)
+                    HomeView(selectedTab: $selectedTab, showSettings: $showSettings)
                         .tag(Tab.home)
                         .accessibilityLabel(ContentView.Tab.home.localizedTitle(for: appState.appLanguage))
                     
@@ -87,10 +84,6 @@ struct ContentView: View {
                     ReportView()
                         .tag(Tab.report)
                         .accessibilityLabel(ContentView.Tab.report.localizedTitle(for: appState.appLanguage))
-                    
-                    SettingsView()
-                        .tag(Tab.settings)
-                        .accessibilityLabel(ContentView.Tab.settings.localizedTitle(for: appState.appLanguage))
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                 .onAppear {
@@ -103,8 +96,8 @@ struct ContentView: View {
                 CustomTabBar(selectedTab: $selectedTab)
             }
         }
-        .sheet(isPresented: $showProfile) {
-            ProfileView()
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
         }
     }
 }
@@ -138,14 +131,6 @@ struct CustomTabBar: View {
                 isSelected: selectedTab == .report
             ) {
                 selectedTab = .report
-            }
-            
-            TabBarButton(
-                icon: "gearshape.fill",
-                title: ContentView.Tab.settings.localizedTitle(for: appState.appLanguage),
-                isSelected: selectedTab == .settings
-            ) {
-                selectedTab = .settings
             }
         }
         .padding(.horizontal, 20)
