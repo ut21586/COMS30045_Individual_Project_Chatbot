@@ -1,5 +1,4 @@
 //
-//
 //package com.withapp.with.ui.screens
 //
 //import androidx.compose.foundation.background
@@ -20,11 +19,13 @@
 //import androidx.compose.ui.draw.clip
 //import androidx.compose.ui.graphics.Color
 //import androidx.compose.ui.text.font.FontWeight
-//import androidx.compose.ui.text.input.TextFieldValue // 解决中文输入法的关键
+//import androidx.compose.ui.text.input.TextFieldValue
+//import androidx.compose.ui.text.style.TextAlign
 //import androidx.compose.ui.unit.dp
 //import androidx.compose.ui.unit.sp
 //import androidx.lifecycle.viewmodel.compose.viewModel
 //import com.withapp.with.viewmodels.ReportViewModel
+//import com.withapp.with.viewmodels.UserProfile
 //import kotlinx.coroutines.launch
 //
 //@OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +38,7 @@
 //
 //    ModalNavigationDrawer(
 //        drawerState = drawerState,
-//        drawerContent = { ModalDrawerSheet { ProfileSidebarContent() } }
+//        drawerContent = { ModalDrawerSheet { ProfileSidebarContent(reportViewModel) } }
 //    ) {
 //        Scaffold(
 //            topBar = {
@@ -69,9 +70,8 @@
 //
 //@Composable
 //fun HomeChatCombinedView(reportViewModel: ReportViewModel) {
-//    // 使用 TextFieldValue 彻底解决中文输入法状态丢失的问题
 //    var inputText by remember { mutableStateOf(TextFieldValue("")) }
-//    val chatMessages = remember { mutableStateListOf(ChatMessage("嗨！试着说『吃了面条碳水 60』或『跑了 45 分钟』，我会立刻提取数字并画在图表上！", false)) }
+//    val chatMessages = remember { mutableStateListOf(ChatMessage("嗨！我是 With。直接对我说『血糖 5.8，趋势向下，速率0.1』，我会为你自动同步所有的底层参数！", false)) }
 //
 //    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA))) {
 //        Column(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -86,7 +86,7 @@
 //                OutlinedTextField(
 //                    value = inputText,
 //                    onValueChange = { inputText = it },
-//                    placeholder = { Text("输入带有数字的记录...") },
+//                    placeholder = { Text("输入血糖、饮食、运动或情绪...") },
 //                    modifier = Modifier.weight(1f),
 //                    shape = RoundedCornerShape(24.dp)
 //                )
@@ -94,8 +94,8 @@
 //                    val text = inputText.text
 //                    if (text.isNotBlank()) {
 //                        chatMessages.add(ChatMessage(text, true))
-//                        reportViewModel.processChatInput(text) // 触发图表和列表实时更新！
-//                        chatMessages.add(ChatMessage("✅ 已识别并提取数值！去【报告】页看看你的专属图表吧。", false))
+//                        reportViewModel.processChatInput(text) // ✨ AI同步引擎
+//                        chatMessages.add(ChatMessage("✅ 已识别！核心数据、走势箭头和速率已全部记录进你的个人报告中。", false))
 //                        inputText = TextFieldValue("")
 //                    }
 //                }) { Icon(Icons.AutoMirrored.Filled.Send, null, tint = Color(0xFF008080)) }
@@ -105,27 +105,50 @@
 //}
 //
 //@Composable
-//fun ProfileSidebarContent() {
+//fun ProfileSidebarContent(reportViewModel: ReportViewModel) {
 //    val scrollState = rememberScrollState()
+//    var isEditing by remember { mutableStateOf(false) }
+//    val profile = reportViewModel.userProfile.value
+//    var age by remember(profile) { mutableStateOf(profile.age) }
+//    var gender by remember(profile) { mutableStateOf(profile.gender) }
+//    var height by remember(profile) { mutableStateOf(profile.height) }
+//    var weight by remember(profile) { mutableStateOf(profile.weight) }
+//    var diagnosis by remember(profile) { mutableStateOf(profile.diagnosisDate) }
+//    var insulin by remember(profile) { mutableStateOf(profile.insulinUse) }
+//    var hba1c by remember(profile) { mutableStateOf(profile.hba1c) }
+//
 //    Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(24.dp)) {
-//        Text("个人档案", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080))
-//        Spacer(Modifier.height(24.dp))
+//        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+//            Text("个人档案", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080))
+//            TextButton(onClick = {
+//                if (isEditing) reportViewModel.updateProfile(UserProfile(age, gender, height, weight, diagnosis, insulin, hba1c))
+//                isEditing = !isEditing
+//            }) { Text(if (isEditing) "保存" else "编辑", color = Color(0xFF008080), fontWeight = FontWeight.Bold) }
+//        }
+//        Spacer(Modifier.height(16.dp))
 //        Text("基本信息", fontWeight = FontWeight.Bold, color = Color(0xFF008080), fontSize = 14.sp)
-//        ProfileInfoRow("年龄", "28 岁"); ProfileInfoRow("性别", "女"); ProfileInfoRow("身高", "175 cm"); ProfileInfoRow("体重", "70 kg")
+//        EditableProfileRow("年龄", age, isEditing) { age = it }; EditableProfileRow("性别", gender, isEditing) { gender = it }
+//        EditableProfileRow("身高", height, isEditing) { height = it }; EditableProfileRow("体重", weight, isEditing) { weight = it }
 //        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 //        Text("健康背景", fontWeight = FontWeight.Bold, color = Color(0xFF008080), fontSize = 14.sp)
-//        ProfileInfoRow("确诊时间", "2023 年 5 月"); ProfileInfoRow("使用胰岛素", "是"); ProfileInfoRow("最近 HbA1c", "6.2 %")
-//        Spacer(Modifier.weight(1f)); Text("With v2.0 - 始终同行", color = Color.LightGray, fontSize = 12.sp)
+//        EditableProfileRow("确诊时间", diagnosis, isEditing) { diagnosis = it }
+//        EditableProfileRow("使用胰岛素", insulin, isEditing) { insulin = it }
+//        EditableProfileRow("最近 HbA1c", hba1c, isEditing) { hba1c = it }
+//        Spacer(Modifier.weight(1f)); Text("With v2.0 - 始终同行", color = Color.LightGray, fontSize = 12.sp, modifier = Modifier.padding(top = 20.dp))
 //    }
 //}
 //
 //@Composable
-//fun ProfileInfoRow(label: String, value: String) {
-//    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-//        Text(label, color = Color.Gray); Text(value, fontWeight = FontWeight.Medium)
+//fun EditableProfileRow(label: String, value: String, isEditing: Boolean, onValueChange: (String) -> Unit) {
+//    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+//        Text(label, color = Color.Gray, modifier = Modifier.weight(0.4f))
+//        if (isEditing) {
+//            OutlinedTextField(value = value, onValueChange = onValueChange, modifier = Modifier.weight(0.6f), singleLine = true, textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, textAlign = TextAlign.End))
+//        } else {
+//            Text(value, fontWeight = FontWeight.Medium, modifier = Modifier.weight(0.6f), textAlign = TextAlign.End)
+//        }
 //    }
 //}
-
 package com.withapp.with.ui.screens
 
 import androidx.compose.foundation.background
@@ -198,7 +221,7 @@ fun MainContainer(onRequestPermission: () -> Unit = {}) {
 @Composable
 fun HomeChatCombinedView(reportViewModel: ReportViewModel) {
     var inputText by remember { mutableStateOf(TextFieldValue("")) }
-    val chatMessages = remember { mutableStateListOf(ChatMessage("嗨！我是 With。试着说『吃了面条碳水 60』或『跑了 45 分钟』，我会立刻提取数字并画在图表上！", false)) }
+    val chatMessages = remember { mutableStateListOf(ChatMessage("嗨！我是 With。直接对我说『血糖 5.8，趋势上升，速率0.1』，我会自动同步所有的底层参数！", false)) }
 
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA))) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -213,7 +236,7 @@ fun HomeChatCombinedView(reportViewModel: ReportViewModel) {
                 OutlinedTextField(
                     value = inputText,
                     onValueChange = { inputText = it },
-                    placeholder = { Text("输入带有数字的记录...") },
+                    placeholder = { Text("输入血糖、饮食、运动或情绪...") },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(24.dp)
                 )
@@ -222,7 +245,7 @@ fun HomeChatCombinedView(reportViewModel: ReportViewModel) {
                     if (text.isNotBlank()) {
                         chatMessages.add(ChatMessage(text, true))
                         reportViewModel.processChatInput(text)
-                        chatMessages.add(ChatMessage("✅ 已识别并提取数值！去【报告】页看看你的专属图表吧。", false))
+                        chatMessages.add(ChatMessage("✅ 已识别！数据已自动同步且重绘了最新图表。", false))
                         inputText = TextFieldValue("")
                     }
                 }) { Icon(Icons.AutoMirrored.Filled.Send, null, tint = Color(0xFF008080)) }
@@ -235,9 +258,7 @@ fun HomeChatCombinedView(reportViewModel: ReportViewModel) {
 fun ProfileSidebarContent(reportViewModel: ReportViewModel) {
     val scrollState = rememberScrollState()
     var isEditing by remember { mutableStateOf(false) }
-
     val profile = reportViewModel.userProfile.value
-
     var age by remember(profile) { mutableStateOf(profile.age) }
     var gender by remember(profile) { mutableStateOf(profile.gender) }
     var height by remember(profile) { mutableStateOf(profile.height) }
@@ -250,47 +271,29 @@ fun ProfileSidebarContent(reportViewModel: ReportViewModel) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("个人档案", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080))
             TextButton(onClick = {
-                if (isEditing) {
-                    reportViewModel.updateProfile(UserProfile(age, gender, height, weight, diagnosis, insulin, hba1c))
-                }
+                if (isEditing) reportViewModel.updateProfile(UserProfile(age, gender, height, weight, diagnosis, insulin, hba1c))
                 isEditing = !isEditing
-            }) {
-                Text(if (isEditing) "保存" else "编辑", color = Color(0xFF008080), fontWeight = FontWeight.Bold)
-            }
+            }) { Text(if (isEditing) "保存" else "编辑", color = Color(0xFF008080), fontWeight = FontWeight.Bold) }
         }
         Spacer(Modifier.height(16.dp))
-
         Text("基本信息", fontWeight = FontWeight.Bold, color = Color(0xFF008080), fontSize = 14.sp)
-        EditableProfileRow("年龄", age, isEditing) { age = it }
-        EditableProfileRow("性别", gender, isEditing) { gender = it }
-        EditableProfileRow("身高", height, isEditing) { height = it }
-        EditableProfileRow("体重", weight, isEditing) { weight = it }
-
+        EditableProfileRow("年龄", age, isEditing) { age = it }; EditableProfileRow("性别", gender, isEditing) { gender = it }
+        EditableProfileRow("身高", height, isEditing) { height = it }; EditableProfileRow("体重", weight, isEditing) { weight = it }
         HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-
         Text("健康背景", fontWeight = FontWeight.Bold, color = Color(0xFF008080), fontSize = 14.sp)
         EditableProfileRow("确诊时间", diagnosis, isEditing) { diagnosis = it }
         EditableProfileRow("使用胰岛素", insulin, isEditing) { insulin = it }
         EditableProfileRow("最近 HbA1c", hba1c, isEditing) { hba1c = it }
-
-        Spacer(Modifier.weight(1f))
-        Text("With v2.0 - 始终同行", color = Color.LightGray, fontSize = 12.sp, modifier = Modifier.padding(top = 20.dp))
+        Spacer(Modifier.weight(1f)); Text("With v2.0 - 始终同行", color = Color.LightGray, fontSize = 12.sp, modifier = Modifier.padding(top = 20.dp))
     }
 }
 
-// 🔥 核心修复处：删除了导致报错的 contentPadding，彻底通过编译！
 @Composable
 fun EditableProfileRow(label: String, value: String, isEditing: Boolean, onValueChange: (String) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Text(label, color = Color.Gray, modifier = Modifier.weight(0.4f))
         if (isEditing) {
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier.weight(0.6f),
-                singleLine = true,
-                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, textAlign = TextAlign.End)
-            )
+            OutlinedTextField(value = value, onValueChange = onValueChange, modifier = Modifier.weight(0.6f), singleLine = true, textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, textAlign = TextAlign.End))
         } else {
             Text(value, fontWeight = FontWeight.Medium, modifier = Modifier.weight(0.6f), textAlign = TextAlign.End)
         }

@@ -1,4 +1,4 @@
-
+//
 //package com.withapp.with.ui.screens
 //
 //import androidx.compose.foundation.*
@@ -37,146 +37,120 @@
 //    var showDietDialog by remember { mutableStateOf(false) }
 //    var showExerciseDialog by remember { mutableStateOf(false) }
 //    var showHrDialog by remember { mutableStateOf(false) }
+//    var showCgmDialog by remember { mutableStateOf(false) } // 血糖手动弹窗
 //
 //    Scaffold(
-//        topBar = { TopAppBar(title = { Text("健康数据报告", fontWeight = FontWeight.Bold) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }) }
+//        topBar = { TopAppBar(title = { Text("高精度全量数据报告", fontWeight = FontWeight.Bold) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }) }
 //    ) { paddingValues ->
 //        Column(modifier = Modifier.fillMaxSize().padding(paddingValues).background(Color(0xFFF7F9FA)).verticalScroll(scrollState).padding(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
 //
 //            TimeScaleSelector(selectedScale = currentScale, onScaleSelect = { reportViewModel.currentScale.value = it })
 //
-//            // 🚀 板块一：保留最精准的 CGM (7部分全在)
-//            Text("📊 CGM报告 (${currentScale})", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF008080))
+//            // 🩸 SECTION 1: 全体系 CGM 包含全新原始数据！
+//            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+//                Text("📊 CGM 核心数据总览 (${currentScale})", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF008080))
+//                IconButton(onClick = { showCgmDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFF008080).copy(0.1f), CircleShape)) { Icon(Icons.Default.Add, null, tint = Color(0xFF008080), modifier = Modifier.size(18.dp)) }
+//            }
 //            ClinicalCgmCard(cgmRep, cgmNodes)
 //
-//            // 🚀 板块二：保留最精准的情绪看板 (10指标全在)
-//            Text("🧠 情绪指标 (${currentScale})", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFFFFB74D))
+//            // 🧠 SECTION 2: 情绪指标
+//            Text("🧠 核心情绪指标与量表 (${currentScale})", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFFFFB74D))
 //            ClinicalMoodCard(moodRep, moodNodes)
 //
-//            // 🚀 板块三：全面升级的动态数据图表 + 滑动列表
-//            Text("🛡️ 健康)", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF5C6BC0))
-//
-//            // 饮食图表与列表
-//            HealthListCard(
-//                title = "🍏 饮食", accent = Color(0xFF81C784), items = reportViewModel.dietLogs.toList(),
-//                onAddClick = { showDietDialog = true }, valueSelector = { it.numericValue },
-//                textSelector = { "${it.time} - ${it.food} (${it.carbs})" }
-//            )
-//
-//            // 运动图表与列表
-//            HealthListCard(
-//                title = "🏃 运动", accent = Color(0xFF4FC3F7), items = reportViewModel.exerciseLogs.toList(),
-//                onAddClick = { showExerciseDialog = true }, valueSelector = { it.numericValue },
-//                textSelector = { "${it.time} - ${it.activity} (${it.duration})" }
-//            )
-//
-//            // 心率图表与列表
-//            HealthListCard(
-//                title = "💓 心率", accent = Color(0xFFE57373), items = reportViewModel.hrLogs.toList(),
-//                onAddClick = { showHrDialog = true }, valueSelector = { it.bpm.toFloat() },
-//                textSelector = { "${it.time} - BPM: ${it.bpm} (${it.status})" }
-//            )
+//            // 🛡️ SECTION 3: 实时同步历史图表
+//            Text("🛡️ 行为/上下文数据走势", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF5C6BC0))
+//            HealthListCard("🍏 饮食与胰岛素 (行为数据)", Color(0xFF81C784), reportViewModel.dietLogs.toList(), { showDietDialog = true }, { it.numericValue }, { "${it.time} - ${it.food} (${it.carbs})" })
+//            HealthListCard("🏃 运动与睡眠 (影响因子)", Color(0xFF4FC3F7), reportViewModel.exerciseLogs.toList(), { showExerciseDialog = true }, { it.numericValue }, { "${it.time} - ${it.activity} (${it.duration})" })
+//            HealthListCard("💓 心率 (BPM)", Color(0xFFE57373), reportViewModel.hrLogs.toList(), { showHrDialog = true }, { it.bpm.toFloat() }, { "${it.time} - BPM: ${it.bpm} (${it.status})" })
 //
 //            Spacer(Modifier.height(40.dp))
 //        }
 //
-//        // 弹窗
-//        if (showDietDialog) InputDialog("添加饮食", "内容", "碳水(g)") { v1, v2 -> reportViewModel.addDiet(v1, v2); showDietDialog = false }
+//        // 🚀 终极手动弹窗 (支持 CGM 所有维度的录入)
+//        if (showCgmDialog) {
+//            var v1 by remember { mutableStateOf("") }; var v2 by remember { mutableStateOf("") }; var v3 by remember { mutableStateOf("") }
+//            AlertDialog(onDismissRequest = { showCgmDialog = false }, title = { Text("添加实时CGM原始数据") },
+//                text = { Column {
+//                    OutlinedTextField(v1, {v1=it}, label={Text("血糖值 (mmol/L)")}); Spacer(Modifier.height(8.dp))
+//                    OutlinedTextField(v2, {v2=it}, label={Text("趋势 (↑, →, ↓)")}); Spacer(Modifier.height(8.dp))
+//                    OutlinedTextField(v3, {v3=it}, label={Text("变化速率 (mmol/L/min)")})
+//                } },
+//                confirmButton = { Button(onClick = { reportViewModel.addCgmNode(v1.toDoubleOrNull() ?: 5.5, v2.ifBlank { "→" }, v3.ifBlank { "0.0" }); showCgmDialog = false }) { Text("添加") } }
+//            )
+//        }
+//        if (showDietDialog) InputDialog("添加上下文数据", "项目(如: 餐食/胰岛素)", "数值") { v1, v2 -> reportViewModel.addDiet(v1, v2); showDietDialog = false }
 //        if (showExerciseDialog) InputDialog("添加运动", "项目", "时长(min)") { v1, v2 -> reportViewModel.addExercise(v1, v2); showExerciseDialog = false }
 //        if (showHrDialog) InputDialog("添加心率", "BPM", "状态") { v1, v2 -> reportViewModel.addHeartRate(v1.toIntOrNull() ?: 75, v2); showHrDialog = false }
 //    }
 //}
 //
-//// 🆕 增强组件：能自动画图、能滑动的列表卡片！
-//@Composable
-//fun <T> HealthListCard(
-//    title: String, accent: Color, items: List<T>, onAddClick: () -> Unit,
-//    valueSelector: (T) -> Float, textSelector: (T) -> String
-//) {
-//    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-//        Column(modifier = Modifier.padding(16.dp)) {
-//            // 标题与添加按钮
-//            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-//                Text(title, fontWeight = FontWeight.Bold, color = accent, fontSize = 16.sp)
-//                IconButton(onClick = onAddClick, modifier = Modifier.size(28.dp).background(accent.copy(alpha = 0.15f), CircleShape)) {
-//                    Icon(Icons.Default.Add, null, tint = accent, modifier = Modifier.size(18.dp))
-//                }
-//            }
-//            Spacer(Modifier.height(12.dp))
-//
-//            // 📈 自动生成的动态走势图
-//            if (items.isNotEmpty()) {
-//                val chartData = items.reversed() // 反转列表让最新数据在图表右侧
-//                Box(modifier = Modifier.fillMaxWidth().height(100.dp).background(Color(0xFFFAFAFA), RoundedCornerShape(8.dp)).padding(8.dp)) {
-//                    Canvas(modifier = Modifier.fillMaxSize()) {
-//                        val w = size.width; val h = size.height
-//                        val maxVal = chartData.maxOfOrNull { valueSelector(it) } ?: 100f
-//                        val minVal = chartData.minOfOrNull { valueSelector(it) } ?: 0f
-//                        val range = if (maxVal == minVal) 1f else (maxVal - minVal)
-//                        val path = Path()
-//
-//                        chartData.forEachIndexed { i, item ->
-//                            val x = if (chartData.size > 1) (i.toFloat() / (chartData.size - 1)) * w else w / 2
-//                            val y = h - ((valueSelector(item) - minVal) / range) * (h * 0.7f) - (h * 0.15f)
-//                            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-//                            drawCircle(accent, 6f, Offset(x, y))
-//                            drawContext.canvas.nativeCanvas.drawText(valueSelector(item).toInt().toString(), x - 10f, y - 15f, android.graphics.Paint().apply { textSize = 22f; this.color = android.graphics.Color.DKGRAY })
-//                        }
-//                        drawPath(path, accent.copy(alpha = 0.6f), style = Stroke(4f))
-//                    }
-//                }
-//            } else {
-//                Text("暂无数据", color = Color.LightGray, fontSize = 12.sp, modifier = Modifier.padding(vertical = 20.dp))
-//            }
-//
-//            Spacer(Modifier.height(12.dp))
-//            Text("历史记录 (${items.size})", fontSize = 12.sp, color = Color.Gray)
-//
-//            // 📜 可滚动的历史列表
-//            Column(modifier = Modifier.fillMaxWidth().heightIn(max = 140.dp).verticalScroll(rememberScrollState())) {
-//                items.forEach { item ->
-//                    Text(textSelector(item), fontSize = 13.sp, color = Color.DarkGray, modifier = Modifier.padding(vertical = 8.dp))
-//                    HorizontalDivider(color = Color(0xFFF1F1F1))
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//// ---- 下面是你死保的 CGM 和 MOOD 医疗组件，无任何删减！ ----
 //@Composable
 //fun ClinicalCgmCard(report: ClinicalCgmReport, nodes: List<CgmNode>) {
 //    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
 //        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-//            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-//                Column { Text("1. 设备信息", fontSize = 10.sp, color = Color.Gray); Text(report.deviceInfo, fontSize = 12.sp) }
-//                Column(horizontalAlignment = Alignment.End) { Text("2. 质量", fontSize = 10.sp, color = Color.Gray); Text(report.dataCoverage, fontSize = 12.sp, color = Color(0xFF008080)) }
-//            }
-//            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-//                MetricItem("平均血糖", report.avgGlucose); MetricItem("GMI", report.gmi); MetricItem("CV", report.cv)
-//            }
-//            Row(modifier = Modifier.fillMaxWidth().height(12.dp).clip(CircleShape)) {
-//                Box(modifier = Modifier.weight(report.tirLow.toFloat()).fillMaxHeight().background(Color(0xFF64B5F6)))
-//                Box(modifier = Modifier.weight(report.tirTarget.toFloat()).fillMaxHeight().background(Color(0xFF4CAF50)))
-//                Box(modifier = Modifier.weight(report.tirHigh.toFloat()).fillMaxHeight().background(Color(0xFFE57373)))
-//            }
-//            Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-//                Canvas(modifier = Modifier.width(1000.dp).height(150.dp)) {
-//                    val w = size.width; val h = size.height; val path = Path()
-//                    nodes.forEachIndexed { i, n ->
-//                        val x = (i.toFloat() / nodes.size) * w + 50f; val y = h - (n.value.toFloat() / 15f) * h
-//                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-//                        drawCircle(Color(0xFF008080), 8f, Offset(x, y))
-//                        drawContext.canvas.nativeCanvas.drawText("${n.value}", x-20f, y-20f, android.graphics.Paint().apply { textSize = 32f; isFakeBoldText = true })
+//
+//            // 🟢 专属展示：实时与原始数据 (Screenshot 22:22:03 对标)
+//            val latest = nodes.lastOrNull()
+//            if (latest != null) {
+//                Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp)).padding(12.dp)) {
+//                    Text("🟢 实时与原始数据 (Raw Data)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF2E7D32))
+//                    Spacer(Modifier.height(8.dp))
+//                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+//                        MetricItem("当前血糖值", "${latest.value} mmol/L")
+//                        MetricItem("时间戳", latest.timeLabel)
+//                        MetricItem("趋势箭头", latest.trend)
 //                    }
-//                    drawPath(path, Color(0xFF008080), style = Stroke(5f))
+//                    Spacer(Modifier.height(8.dp))
+//                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+//                        MetricItem("采样时间间隔", latest.samplingInterval)
+//                        MetricItem("血糖变化速率", "${latest.rateOfChange} mmol/L/min")
+//                    }
 //                }
 //            }
-//            Text("解读: ${report.clinicalAdvice}", fontSize = 11.sp, color = Color.Gray, modifier = Modifier.background(Color(0xFFF1F8E9), RoundedCornerShape(4.dp)).padding(8.dp))
+//
+//            // 下方是保留的原始 7 项数据，绝无删减！
+//            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+//                Column { Text("设备状态", fontSize = 10.sp, color = Color.Gray); Text(report.deviceInfo, fontSize = 12.sp) }
+//                Column(horizontalAlignment = Alignment.End) { Text("完整率", fontSize = 10.sp, color = Color.Gray); Text(report.completeness, fontSize = 12.sp, color = Color(0xFF008080)) }
+//            }
+//            HorizontalDivider(color = Color(0xFFF1F1F1))
+//            Text("📈 统计汇总数据", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+//            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+//                MetricItem("平均血糖", report.avgGlucose); MetricItem("波动 CV", report.cv); MetricItem("MAGE", report.mage)
+//            }
+//            Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF1F8E9), RoundedCornerShape(8.dp)).padding(10.dp)) {
+//                Text("🎯 TIR体系", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+//                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).height(12.dp).clip(CircleShape)) {
+//                    Box(modifier = Modifier.weight(report.tirLow.toFloat()).fillMaxHeight().background(Color(0xFF64B5F6)))
+//                    Box(modifier = Modifier.weight(report.tirTarget.toFloat()).fillMaxHeight().background(Color(0xFF4CAF50)))
+//                    Box(modifier = Modifier.weight(report.tirHigh.toFloat()).fillMaxHeight().background(Color(0xFFE57373)))
+//                }
+//                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+//                    Text("TBR (<3.9): ${report.tbrLevel1}", fontSize = 10.sp); Text("TIR: ${report.tirTarget}%", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF4CAF50)); Text("TAR (>10): ${report.tarLevel1}", fontSize = 10.sp)
+//                }
+//            }
+//            Text("📍 AGP 曲线", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+//            Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+//                Canvas(modifier = Modifier.width((nodes.size * 100).coerceAtLeast(300).dp).height(150.dp)) {
+//                    val w = size.width; val h = size.height; val path = Path()
+//                    val maxVal = nodes.maxOfOrNull { it.value } ?: 15.0; val minVal = nodes.minOfOrNull { it.value } ?: 2.0
+//                    val range = if (maxVal == minVal) 1.0 else (maxVal - minVal)
+//                    nodes.forEachIndexed { i, n ->
+//                        val x = if(nodes.size > 1) (i.toFloat() / (nodes.size - 1)) * w else w/2
+//                        val y = h - (((n.value - minVal) / range) * (h * 0.6) + h * 0.2).toFloat()
+//                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+//                        drawCircle(Color(0xFF008080), 8f, Offset(x, y))
+//                        drawContext.canvas.nativeCanvas.drawText("${n.value} ${n.trend}", x-20f, y-20f, android.graphics.Paint().apply { textSize = 28f; isFakeBoldText = true })
+//                    }
+//                    drawPath(path, Color(0xFF008080), style = Stroke(4f))
+//                }
+//            }
+//            Text("⚠️ 事件与警报: 低血糖 ${report.hypoEvents} 次 | 警报 ${report.alertsTriggered} 次", fontSize = 11.sp, color = Color(0xFFE57373))
 //        }
 //    }
 //}
 //
+//// ---- 下面是保留的无损情绪卡片与动态图表列表 ----
 //@Composable
 //fun ClinicalMoodCard(report: ClinicalMoodReport, nodes: List<MoodLog>) {
 //    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -214,6 +188,41 @@
 //}
 //
 //@Composable
+//fun <T> HealthListCard(title: String, accent: Color, items: List<T>, onAddClick: () -> Unit, valueSelector: (T) -> Float, textSelector: (T) -> String) {
+//    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+//        Column(modifier = Modifier.padding(16.dp)) {
+//            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+//                Text(title, fontWeight = FontWeight.Bold, color = accent, fontSize = 14.sp)
+//                IconButton(onClick = onAddClick, modifier = Modifier.size(28.dp).background(accent.copy(0.15f), CircleShape)) { Icon(Icons.Default.Add, null, tint = accent, modifier = Modifier.size(18.dp)) }
+//            }
+//            Spacer(Modifier.height(12.dp))
+//            if (items.isNotEmpty()) {
+//                val chartData = items.reversed()
+//                Box(modifier = Modifier.fillMaxWidth().height(90.dp).background(Color(0xFFFAFAFA), RoundedCornerShape(8.dp)).padding(8.dp)) {
+//                    Canvas(modifier = Modifier.fillMaxSize()) {
+//                        val w = size.width; val h = size.height
+//                        val maxVal = chartData.maxOfOrNull { valueSelector(it) } ?: 100f; val minVal = chartData.minOfOrNull { valueSelector(it) } ?: 0f
+//                        val range = if (maxVal == minVal) 1f else (maxVal - minVal)
+//                        val path = Path()
+//                        chartData.forEachIndexed { i, item ->
+//                            val x = if (chartData.size > 1) (i.toFloat() / (chartData.size - 1)) * w else w / 2
+//                            val y = h - ((valueSelector(item) - minVal) / range) * (h * 0.7f) - (h * 0.15f)
+//                            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+//                            drawCircle(accent, 6f, Offset(x, y)); drawContext.canvas.nativeCanvas.drawText(valueSelector(item).toInt().toString(), x-10f, y-15f, android.graphics.Paint().apply { textSize=22f; color=android.graphics.Color.DKGRAY })
+//                        }
+//                        drawPath(path, accent.copy(0.6f), style = Stroke(4f))
+//                    }
+//                }
+//            } else { Text("暂无数据", color = Color.LightGray, fontSize = 12.sp, modifier = Modifier.padding(vertical = 10.dp)) }
+//            Spacer(Modifier.height(10.dp))
+//            Column(modifier = Modifier.fillMaxWidth().heightIn(max = 140.dp).verticalScroll(rememberScrollState())) {
+//                items.forEach { item -> Text(textSelector(item), fontSize = 12.sp, color = Color.DarkGray, modifier = Modifier.padding(vertical = 6.dp)); HorizontalDivider(color = Color(0xFFF1F1F1)) }
+//            }
+//        }
+//    }
+//}
+//
+//@Composable
 //fun MetricItem(label: String, value: String) {
 //    Column { Text(label, fontSize = 10.sp, color = Color.Gray); Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080)) }
 //}
@@ -240,8 +249,6 @@
 //        }
 //    }
 //}
-
-
 package com.withapp.with.ui.screens
 
 import androidx.compose.foundation.*
@@ -280,6 +287,7 @@ fun ReportView(reportViewModel: ReportViewModel, onBack: () -> Unit = {}) {
     var showDietDialog by remember { mutableStateOf(false) }
     var showExerciseDialog by remember { mutableStateOf(false) }
     var showHrDialog by remember { mutableStateOf(false) }
+    var showCgmDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("高精度全量数据报告", fontWeight = FontWeight.Bold) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }) }
@@ -288,93 +296,61 @@ fun ReportView(reportViewModel: ReportViewModel, onBack: () -> Unit = {}) {
 
             TimeScaleSelector(selectedScale = currentScale, onScaleSelect = { reportViewModel.currentScale.value = it })
 
-            // 🚀 板块一：精准 CGM 报告
-            Text("📊 CGM 医学标准报告 (${currentScale})", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF008080))
+            // 🩸 SECTION 1: 全体系 CGM
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("📊 CGM 核心数据总览 (${currentScale})", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF008080))
+                IconButton(onClick = { showCgmDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFF008080).copy(0.1f), CircleShape)) { Icon(Icons.Default.Add, null, tint = Color(0xFF008080), modifier = Modifier.size(18.dp)) }
+            }
             ClinicalCgmCard(cgmRep, cgmNodes)
 
-            // 🚀 板块二：精准情绪报告
+            // 🧠 SECTION 2: 情绪指标
             Text("🧠 核心情绪指标与量表 (${currentScale})", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFFFFB74D))
             ClinicalMoodCard(moodRep, moodNodes)
 
-            // 🚀 板块三：带图表与列表的实时数据卡片！
-            Text("🛡️ 实时健康走势与历史 (Chat自动同步)", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF5C6BC0))
-
-            HealthListCard(
-                title = "🍏 饮食 (碳水波动图)", accent = Color(0xFF81C784), items = reportViewModel.dietLogs.toList(),
-                onAddClick = { showDietDialog = true }, valueSelector = { it.numericValue },
-                textSelector = { "${it.time} - ${it.food} (${it.carbs})" }
-            )
-
-            HealthListCard(
-                title = "🏃 运动 (时长波动图)", accent = Color(0xFF4FC3F7), items = reportViewModel.exerciseLogs.toList(),
-                onAddClick = { showExerciseDialog = true }, valueSelector = { it.numericValue },
-                textSelector = { "${it.time} - ${it.activity} (${it.duration})" }
-            )
-
-            HealthListCard(
-                title = "💓 心率 (BPM曲线图)", accent = Color(0xFFE57373), items = reportViewModel.hrLogs.toList(),
-                onAddClick = { showHrDialog = true }, valueSelector = { it.bpm.toFloat() },
-                textSelector = { "${it.time} - BPM: ${it.bpm} (${it.status})" }
-            )
+            // 🛡️ SECTION 3: 实时同步历史图表
+            Text("🛡️ 行为/上下文数据走势", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF5C6BC0))
+            HealthListCard("🍏 饮食与胰岛素 (行为数据)", Color(0xFF81C784), reportViewModel.dietLogs.toList(), { showDietDialog = true }, { it.numericValue }, { "${it.time} - ${it.food} (${it.carbs})" })
+            HealthListCard("🏃 运动与睡眠 (影响因子)", Color(0xFF4FC3F7), reportViewModel.exerciseLogs.toList(), { showExerciseDialog = true }, { it.numericValue }, { "${it.time} - ${it.activity} (${it.duration})" })
+            HealthListCard("💓 心率 (BPM)", Color(0xFFE57373), reportViewModel.hrLogs.toList(), { showHrDialog = true }, { it.bpm.toFloat() }, { "${it.time} - BPM: ${it.bpm} (${it.status})" })
 
             Spacer(Modifier.height(40.dp))
         }
 
-        if (showDietDialog) InputDialog("添加饮食", "内容", "碳水(g)") { v1, v2 -> reportViewModel.addDiet(v1, v2); showDietDialog = false }
+        // 🚀 终极修复：完美提供 5 个输入框的弹窗
+        if (showCgmDialog) {
+            var v1 by remember { mutableStateOf("") } // 血糖
+            var v2 by remember { mutableStateOf("") } // 时间戳
+            var v3 by remember { mutableStateOf("") } // 采样间隔
+            var v4 by remember { mutableStateOf("") } // 趋势
+            var v5 by remember { mutableStateOf("") } // 变化速率
+
+            AlertDialog(onDismissRequest = { showCgmDialog = false },
+                title = { Text("添加实时CGM原始数据", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(v1, {v1=it}, label={Text("当前血糖值 (Glucose)")}, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(v2, {v2=it}, label={Text("时间戳 (Timestamp)")}, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(v3, {v3=it}, label={Text("采样时间间隔 (Interval)")}, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(v4, {v4=it}, label={Text("趋势箭头 (Trend)")}, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(v5, {v5=it}, label={Text("血糖变化速率 (Rate)")}, modifier = Modifier.fillMaxWidth())
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        reportViewModel.addCgmNode(
+                            v1.toDoubleOrNull() ?: 5.5,
+                            v2, v3,
+                            v4.ifBlank { "→" },
+                            v5.ifBlank { "0.0" }
+                        )
+                        showCgmDialog = false
+                    }) { Text("添加") }
+                }
+            )
+        }
+        if (showDietDialog) InputDialog("添加上下文数据", "项目", "数值") { v1, v2 -> reportViewModel.addDiet(v1, v2); showDietDialog = false }
         if (showExerciseDialog) InputDialog("添加运动", "项目", "时长(min)") { v1, v2 -> reportViewModel.addExercise(v1, v2); showExerciseDialog = false }
         if (showHrDialog) InputDialog("添加心率", "BPM", "状态") { v1, v2 -> reportViewModel.addHeartRate(v1.toIntOrNull() ?: 75, v2); showHrDialog = false }
-    }
-}
-
-@Composable
-fun <T> HealthListCard(
-    title: String, accent: Color, items: List<T>, onAddClick: () -> Unit,
-    valueSelector: (T) -> Float, textSelector: (T) -> String
-) {
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(title, fontWeight = FontWeight.Bold, color = accent, fontSize = 16.sp)
-                IconButton(onClick = onAddClick, modifier = Modifier.size(28.dp).background(accent.copy(alpha = 0.15f), CircleShape)) {
-                    Icon(Icons.Default.Add, null, tint = accent, modifier = Modifier.size(18.dp))
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-
-            if (items.isNotEmpty()) {
-                val chartData = items.reversed()
-                Box(modifier = Modifier.fillMaxWidth().height(100.dp).background(Color(0xFFFAFAFA), RoundedCornerShape(8.dp)).padding(8.dp)) {
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        val w = size.width; val h = size.height
-                        val maxVal = chartData.maxOfOrNull { valueSelector(it) } ?: 100f
-                        val minVal = chartData.minOfOrNull { valueSelector(it) } ?: 0f
-                        val range = if (maxVal == minVal) 1f else (maxVal - minVal)
-                        val path = Path()
-
-                        chartData.forEachIndexed { i, item ->
-                            val x = if (chartData.size > 1) (i.toFloat() / (chartData.size - 1)) * w else w / 2
-                            val y = h - ((valueSelector(item) - minVal) / range) * (h * 0.7f) - (h * 0.15f)
-                            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-                            drawCircle(accent, 6f, Offset(x, y))
-                            drawContext.canvas.nativeCanvas.drawText(valueSelector(item).toInt().toString(), x - 10f, y - 15f, android.graphics.Paint().apply { textSize = 22f; this.color = android.graphics.Color.DKGRAY })
-                        }
-                        drawPath(path, accent.copy(alpha = 0.6f), style = Stroke(4f))
-                    }
-                }
-            } else {
-                Text("暂无数据", color = Color.LightGray, fontSize = 12.sp, modifier = Modifier.padding(vertical = 20.dp))
-            }
-
-            Spacer(Modifier.height(12.dp))
-            Text("历史记录 (${items.size})", fontSize = 12.sp, color = Color.Gray)
-
-            Column(modifier = Modifier.fillMaxWidth().heightIn(max = 140.dp).verticalScroll(rememberScrollState())) {
-                items.forEach { item ->
-                    Text(textSelector(item), fontSize = 13.sp, color = Color.DarkGray, modifier = Modifier.padding(vertical = 8.dp))
-                    HorizontalDivider(color = Color(0xFFF1F1F1))
-                }
-            }
-        }
     }
 }
 
@@ -382,31 +358,62 @@ fun <T> HealthListCard(
 fun ClinicalCgmCard(report: ClinicalCgmReport, nodes: List<CgmNode>) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column { Text("1. 设备信息", fontSize = 10.sp, color = Color.Gray); Text(report.deviceInfo, fontSize = 12.sp) }
-                Column(horizontalAlignment = Alignment.End) { Text("2. 质量", fontSize = 10.sp, color = Color.Gray); Text(report.dataCoverage, fontSize = 12.sp, color = Color(0xFF008080)) }
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                MetricItem("平均血糖", report.avgGlucose); MetricItem("GMI", report.gmi); MetricItem("CV", report.cv)
-            }
-            Row(modifier = Modifier.fillMaxWidth().height(12.dp).clip(CircleShape)) {
-                Box(modifier = Modifier.weight(report.tirLow.toFloat()).fillMaxHeight().background(Color(0xFF64B5F6)))
-                Box(modifier = Modifier.weight(report.tirTarget.toFloat()).fillMaxHeight().background(Color(0xFF4CAF50)))
-                Box(modifier = Modifier.weight(report.tirHigh.toFloat()).fillMaxHeight().background(Color(0xFFE57373)))
-            }
-            Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                Canvas(modifier = Modifier.width(1000.dp).height(150.dp)) {
-                    val w = size.width; val h = size.height; val path = Path()
-                    nodes.forEachIndexed { i, n ->
-                        val x = (i.toFloat() / nodes.size) * w + 50f; val y = h - (n.value.toFloat() / 15f) * h
-                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-                        drawCircle(Color(0xFF008080), 8f, Offset(x, y))
-                        drawContext.canvas.nativeCanvas.drawText("${n.value}", x-20f, y-20f, android.graphics.Paint().apply { textSize = 32f; isFakeBoldText = true })
+
+            val latest = nodes.lastOrNull()
+            if (latest != null) {
+                Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp)).padding(12.dp)) {
+                    Text("🟢 实时与原始数据 (Raw Data)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF2E7D32))
+                    Spacer(Modifier.height(10.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        MetricItem("当前血糖值", "${latest.value} mmol/L")
+                        MetricItem("时间戳", latest.timeLabel)
+                        MetricItem("采样间隔", latest.samplingInterval)
                     }
-                    drawPath(path, Color(0xFF008080), style = Stroke(5f))
+                    Spacer(Modifier.height(10.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        MetricItem("趋势箭头", latest.trend)
+                        MetricItem("血糖变化速率", "${latest.rateOfChange} mmol/L/min")
+                    }
                 }
             }
-            Text("解读: ${report.clinicalAdvice}", fontSize = 11.sp, color = Color.Gray, modifier = Modifier.background(Color(0xFFF1F8E9), RoundedCornerShape(4.dp)).padding(8.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column { Text("设备状态", fontSize = 10.sp, color = Color.Gray); Text(report.deviceInfo, fontSize = 12.sp) }
+                Column(horizontalAlignment = Alignment.End) { Text("完整率", fontSize = 10.sp, color = Color.Gray); Text(report.completeness, fontSize = 12.sp, color = Color(0xFF008080)) }
+            }
+            HorizontalDivider(color = Color(0xFFF1F1F1))
+            Text("📈 统计汇总数据", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                MetricItem("平均血糖", report.avgGlucose); MetricItem("波动 CV", report.cv); MetricItem("MAGE", report.mage)
+            }
+            Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF1F8E9), RoundedCornerShape(8.dp)).padding(10.dp)) {
+                Text("🎯 TIR体系", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).height(12.dp).clip(CircleShape)) {
+                    Box(modifier = Modifier.weight(report.tirLow.toFloat()).fillMaxHeight().background(Color(0xFF64B5F6)))
+                    Box(modifier = Modifier.weight(report.tirTarget.toFloat()).fillMaxHeight().background(Color(0xFF4CAF50)))
+                    Box(modifier = Modifier.weight(report.tirHigh.toFloat()).fillMaxHeight().background(Color(0xFFE57373)))
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("TBR (<3.9): ${report.tbrLevel1}", fontSize = 10.sp); Text("TIR: ${report.tirTarget}%", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF4CAF50)); Text("TAR (>10): ${report.tarLevel1}", fontSize = 10.sp)
+                }
+            }
+            Text("📍 AGP 曲线", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                Canvas(modifier = Modifier.width((nodes.size * 100).coerceAtLeast(300).dp).height(150.dp)) {
+                    val w = size.width; val h = size.height; val path = Path()
+                    val maxVal = nodes.maxOfOrNull { it.value } ?: 15.0; val minVal = nodes.minOfOrNull { it.value } ?: 2.0
+                    val range = if (maxVal == minVal) 1.0 else (maxVal - minVal)
+                    nodes.forEachIndexed { i, n ->
+                        val x = if(nodes.size > 1) (i.toFloat() / (nodes.size - 1)) * w else w/2
+                        val y = h - (((n.value - minVal) / range) * (h * 0.6) + h * 0.2).toFloat()
+                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                        drawCircle(Color(0xFF008080), 8f, Offset(x, y))
+                        drawContext.canvas.nativeCanvas.drawText("${n.value} ${n.trend}", x-20f, y-20f, android.graphics.Paint().apply { textSize = 28f; isFakeBoldText = true })
+                    }
+                    drawPath(path, Color(0xFF008080), style = Stroke(4f))
+                }
+            }
+            Text("⚠️ 事件与警报: 低血糖 ${report.hypoEvents} 次 | 警报 ${report.alertsTriggered} 次", fontSize = 11.sp, color = Color(0xFFE57373))
         }
     }
 }
@@ -448,14 +455,49 @@ fun ClinicalMoodCard(report: ClinicalMoodReport, nodes: List<MoodLog>) {
 }
 
 @Composable
+fun <T> HealthListCard(title: String, accent: Color, items: List<T>, onAddClick: () -> Unit, valueSelector: (T) -> Float, textSelector: (T) -> String) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(title, fontWeight = FontWeight.Bold, color = accent, fontSize = 14.sp)
+                IconButton(onClick = onAddClick, modifier = Modifier.size(28.dp).background(accent.copy(0.15f), CircleShape)) { Icon(Icons.Default.Add, null, tint = accent, modifier = Modifier.size(18.dp)) }
+            }
+            Spacer(Modifier.height(12.dp))
+            if (items.isNotEmpty()) {
+                val chartData = items.reversed()
+                Box(modifier = Modifier.fillMaxWidth().height(90.dp).background(Color(0xFFFAFAFA), RoundedCornerShape(8.dp)).padding(8.dp)) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val w = size.width; val h = size.height
+                        val maxVal = chartData.maxOfOrNull { valueSelector(it) } ?: 100f; val minVal = chartData.minOfOrNull { valueSelector(it) } ?: 0f
+                        val range = if (maxVal == minVal) 1f else (maxVal - minVal)
+                        val path = Path()
+                        chartData.forEachIndexed { i, item ->
+                            val x = if (chartData.size > 1) (i.toFloat() / (chartData.size - 1)) * w else w / 2
+                            val y = h - ((valueSelector(item) - minVal) / range) * (h * 0.7f) - (h * 0.15f)
+                            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                            drawCircle(accent, 6f, Offset(x, y)); drawContext.canvas.nativeCanvas.drawText(valueSelector(item).toInt().toString(), x-10f, y-15f, android.graphics.Paint().apply { textSize=22f; color=android.graphics.Color.DKGRAY })
+                        }
+                        drawPath(path, accent.copy(0.6f), style = Stroke(4f))
+                    }
+                }
+            } else { Text("暂无数据", color = Color.LightGray, fontSize = 12.sp, modifier = Modifier.padding(vertical = 10.dp)) }
+            Spacer(Modifier.height(10.dp))
+            Column(modifier = Modifier.fillMaxWidth().heightIn(max = 140.dp).verticalScroll(rememberScrollState())) {
+                items.forEach { item -> Text(textSelector(item), fontSize = 12.sp, color = Color.DarkGray, modifier = Modifier.padding(vertical = 6.dp)); HorizontalDivider(color = Color(0xFFF1F1F1)) }
+            }
+        }
+    }
+}
+
+@Composable
 fun MetricItem(label: String, value: String) {
-    Column { Text(label, fontSize = 10.sp, color = Color.Gray); Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080)) }
+    Column { Text(label, fontSize = 10.sp, color = Color.Gray); Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080)) }
 }
 
 @Composable
 fun InputDialog(title: String, l1: String, l2: String, onConfirm: (String, String) -> Unit) {
     var t1 by remember { mutableStateOf("") }; var t2 by remember { mutableStateOf("") }
-    AlertDialog(onDismissRequest = {}, title = { Text(title) }, text = { Column { OutlinedTextField(t1, {t1=it}, label={Text(l1)}); Spacer(Modifier.height(8.dp)); OutlinedTextField(t2, {t2=it}, label={Text(l2)}) } },
+    AlertDialog(onDismissRequest = {}, title = { Text(title) }, text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { OutlinedTextField(t1, {t1=it}, label={Text(l1)}, modifier = Modifier.fillMaxWidth()); OutlinedTextField(t2, {t2=it}, label={Text(l2)}, modifier = Modifier.fillMaxWidth()) } },
         confirmButton = { Button(onClick = {onConfirm(t1,t2)}) { Text("添加") } }
     )
 }

@@ -5,19 +5,32 @@
 //import androidx.compose.runtime.mutableStateOf
 //import androidx.lifecycle.ViewModel
 //
-//// --- 🚫 严禁在其他文件定义这些类，彻底解决 Duplicate Class 报错 ---
+//// --- 🚫 严禁重复定义：全局唯一数据模型 ---
 //data class HealthLog(val timeLabel: String, val type: String, val desc: String, val value: String)
 //data class MoodLog(val timeLabel: String, val label: String, val value: String, val numericScore: Float)
-//data class CgmNode(val timeLabel: String, val value: Double)
-//
-//// 升级：加入 numericValue 以支持实时画图
 //data class DietEntry(val time: String, val food: String, val carbs: String, val numericValue: Float)
 //data class ExerciseEntry(val time: String, val activity: String, val duration: String, val numericValue: Float)
 //data class HeartRateEntry(val time: String, val bpm: Int, val status: String)
 //
+//// 🩸 终极升级：精准对标 Screenshot 22:22:03 的【实时与原始数据】
+//data class CgmNode(
+//    val timeLabel: String,             // 1. 时间戳 (Timestamp)
+//    val value: Double,                 // 2. 当前血糖值 (Glucose)
+//    val trend: String = "→",           // 3. 趋势箭头 (Trend Arrow)
+//    val samplingInterval: String,      // 4. 采样时间间隔 (Sampling Interval)
+//    val rateOfChange: String           // 5. 血糖变化速率 (Rate of Change)
+//)
+//
 //data class ClinicalCgmReport(
-//    val deviceInfo: String, val dataCoverage: String, val avgGlucose: String, val gmi: String,
-//    val tirTarget: Int, val tirHigh: Int, val tirLow: Int, val cv: String, val clinicalAdvice: String
+//    val deviceInfo: String, val dataCoverage: String,
+//    val avgGlucose: String, val medianGlucose: String, val percentiles: String,
+//    val sd: String, val cv: String, val mage: String, val gmi: String,
+//    val tirTarget: Int, val tirHigh: Int, val tirLow: Int,
+//    val tbrLevel1: String, val tbrLevel2: String,
+//    val tarLevel1: String, val tarLevel2: String,
+//    val wearTime: String, val completeness: String, val signalLoss: String,
+//    val hypoEvents: Int, val hyperEvents: Int, val alertsTriggered: Int,
+//    val clinicalAdvice: String
 //)
 //
 //data class ClinicalMoodReport(
@@ -26,38 +39,61 @@
 //    val phq9Score: String, val gad7Score: String, val pssScore: String
 //)
 //
+//data class UserProfile(var age: String, var gender: String, var height: String, var weight: String, var diagnosisDate: String, var insulinUse: String, var hba1c: String)
+//
 //class ReportViewModel : ViewModel() {
 //    var currentScale = mutableStateOf("日")
 //
-//    // Live Sync Lists (支持图表与列表的实时更新)
 //    val dietLogs = mutableStateListOf<DietEntry>()
 //    val exerciseLogs = mutableStateListOf<ExerciseEntry>()
 //    val hrLogs = mutableStateListOf<HeartRateEntry>()
 //    val cgmNodes = mutableStateListOf<CgmNode>()
 //    val moodNodes = mutableStateListOf<MoodLog>()
 //
-//    // 临床状态 (完整保留精确数值)
-//    var cgmReport = mutableStateOf(ClinicalCgmReport("With v1 | Day 3", "99%", "6.4", "6.1%", 92, 5, 3, "< 28%", "今日血糖表现极佳，TIR 达标率非常理想。情绪平稳有效支持了血糖控制。"))
-//    var moodReport = mutableStateOf(ClinicalMoodReport("7.5", "7.8", "0.9", "Low", 70, 20, 10, "2 (极轻)", "3 (极轻)", "12 (轻度压力)"))
+//    var cgmReport = mutableStateOf(ClinicalCgmReport(
+//        deviceInfo = "With v1 | 采样率 3min/次", dataCoverage = "99%",
+//        avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
+//        sd = "1.2", cv = "18.7% (<36%)", mage = "2.1", gmi = "6.1%",
+//        tirTarget = 92, tirHigh = 5, tirLow = 3,
+//        tbrLevel1 = "2%", tbrLevel2 = "1% (<3.0)", tarLevel1 = "4%", tarLevel2 = "1% (>13.9)",
+//        wearTime = "98%", completeness = "99.5%", signalLoss = "15 min",
+//        hypoEvents = 1, hyperEvents = 2, alertsTriggered = 3,
+//        clinicalAdvice = "今日血糖极佳，TIR 达标。趋势平稳，无需调整基础率。"
+//    ))
+//
+//    var moodReport = mutableStateOf(ClinicalMoodReport("7.5", "7.8", "0.9", "Low", 70, 20, 10, "2 (极轻)", "3 (极轻)", "12 (轻度)"))
+//    var userProfile = mutableStateOf(UserProfile("28 岁", "女", "175 cm", "70 kg", "2023 年 5 月", "是", "6.2 %"))
 //
 //    init {
-//        // 初始精确 Mock 数据 (包含历史记录用于绘制走势图)
-//        cgmNodes.addAll(listOf(CgmNode("08:00", 5.4), CgmNode("12:00", 6.1), CgmNode("18:00", 5.8)))
+//        // 初始化 CGM 数据 (加入采样率和变化速率)
+//        cgmNodes.addAll(listOf(
+//            CgmNode("08:00", 5.4, "→", "3min", "0.0"),
+//            CgmNode("12:00", 6.1, "↗", "3min", "+0.1"),
+//            CgmNode("18:00", 5.8, "↘", "3min", "-0.1")
+//        ))
 //        moodNodes.addAll(listOf(MoodLog("09:00", "清醒", "极佳", 8.5f), MoodLog("15:00", "餐后", "平稳", 7.0f)))
-//
 //        dietLogs.addAll(listOf(DietEntry("08:30", "全麦面包", "30g", 30f), DietEntry("12:30", "沙拉", "15g", 15f)))
 //        exerciseLogs.addAll(listOf(ExerciseEntry("09:00", "慢跑", "20min", 20f), ExerciseEntry("18:00", "拉伸", "15min", 15f)))
 //        hrLogs.addAll(listOf(HeartRateEntry("08:00", 72, "静息"), HeartRateEntry("19:00", 110, "运动")))
 //    }
 //
-//    // 🚀 CHAT 自动解析与同步引擎
+//    // 🚀 THE MAGIC SYNC ENGINE (全面支持新血糖底层数据解析)
 //    fun processChatInput(input: String) {
 //        val time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-//        // 智能提取输入中的数字用于画图，如果没有则给默认值
 //        val extractedNumber = input.filter { it.isDigit() || it == '.' }.toFloatOrNull()
 //
 //        when {
-//            input.contains("吃") || input.contains("餐") || input.contains("饭") -> {
+//            input.contains("血糖") || input.contains("低血糖") || input.contains("测了") -> {
+//                val bg = extractedNumber ?: 5.5f
+//                val trend = if (input.contains("上") || input.contains("升")) "↑" else if (input.contains("下") || input.contains("降")) "↓" else "→"
+//                val rate = if (input.contains("速率")) input.substringAfter("速率").filter { it.isDigit() || it == '.' }.take(3) else "0.0"
+//                cgmNodes.add(CgmNode(time, bg.toDouble(), trend, "3min", if(rate.isBlank()) "0.0" else rate))
+//            }
+//            input.contains("胰岛素") || input.contains("打针") -> {
+//                val units = extractedNumber ?: 2f
+//                dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units))
+//            }
+//            input.contains("吃") || input.contains("餐") || input.contains("碳水") -> {
 //                val carbs = extractedNumber ?: 40f
 //                dietLogs.add(0, DietEntry(time, input, "约 ${carbs}g", carbs))
 //            }
@@ -69,15 +105,22 @@
 //                val bpm = extractedNumber?.toInt() ?: 85
 //                hrLogs.add(0, HeartRateEntry(time, bpm, "自动识别"))
 //            }
-//            else -> moodNodes.add(0, MoodLog(time, "对话分析", input, 7.8f))
+//            else -> moodNodes.add(0, MoodLog(time, "日常", input, 7.8f))
 //        }
 //    }
 //
-//    // 弹窗手动添加逻辑
-//    fun addDiet(f: String, c: String) { val cv = c.filter { it.isDigit() }.toFloatOrNull() ?: 0f; dietLogs.add(0, DietEntry("现在", f, "${cv}g", cv)) }
-//    fun addExercise(a: String, d: String) { val dv = d.filter { it.isDigit() }.toFloatOrNull() ?: 0f; exerciseLogs.add(0, ExerciseEntry("现在", a, "${dv}min", dv)) }
-//    fun addHeartRate(b: Int, s: String) { hrLogs.add(0, HeartRateEntry("现在", b, s)) }
+//    fun addDiet(f: String, c: String) { val cv = c.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; dietLogs.add(0, DietEntry("手动", f, "${cv}g", cv)) }
+//    fun addExercise(a: String, d: String) { val dv = d.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; exerciseLogs.add(0, ExerciseEntry("手动", a, "${dv}min", dv)) }
+//    fun addHeartRate(b: Int, s: String) { hrLogs.add(0, HeartRateEntry("手动", b, s)) }
+//
+//    // 🆕 增强的手动添加血糖方法
+//    fun addCgmNode(bg: Double, trend: String, rate: String) {
+//        val time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+//        cgmNodes.add(CgmNode(time, bg, trend, "3min", rate))
+//    }
+//    fun updateProfile(newProfile: UserProfile) { userProfile.value = newProfile }
 //}
+
 
 package com.withapp.with.viewmodels
 
@@ -85,17 +128,32 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 
-// --- GLOBAL MODELS (CRITICAL: DEFINED ONLY HERE) ---
+// --- GLOBAL DATA MODELS (唯一在此定义) ---
 data class HealthLog(val timeLabel: String, val type: String, val desc: String, val value: String)
 data class MoodLog(val timeLabel: String, val label: String, val value: String, val numericScore: Float)
-data class CgmNode(val timeLabel: String, val value: Double)
 data class DietEntry(val time: String, val food: String, val carbs: String, val numericValue: Float)
 data class ExerciseEntry(val time: String, val activity: String, val duration: String, val numericValue: Float)
 data class HeartRateEntry(val time: String, val bpm: Int, val status: String)
 
+// 🩸 完美对齐的 5 项原始数据结构
+data class CgmNode(
+    val timeLabel: String,             // 1. 时间戳
+    val value: Double,                 // 2. 血糖值
+    val trend: String,                 // 3. 趋势箭头
+    val samplingInterval: String,      // 4. 采样时间间隔
+    val rateOfChange: String           // 5. 变化速率
+)
+
 data class ClinicalCgmReport(
-    val deviceInfo: String, val dataCoverage: String, val avgGlucose: String, val gmi: String,
-    val tirTarget: Int, val tirHigh: Int, val tirLow: Int, val cv: String, val clinicalAdvice: String
+    val deviceInfo: String, val dataCoverage: String,
+    val avgGlucose: String, val medianGlucose: String, val percentiles: String,
+    val sd: String, val cv: String, val mage: String, val gmi: String,
+    val tirTarget: Int, val tirHigh: Int, val tirLow: Int,
+    val tbrLevel1: String, val tbrLevel2: String,
+    val tarLevel1: String, val tarLevel2: String,
+    val wearTime: String, val completeness: String, val signalLoss: String,
+    val hypoEvents: Int, val hyperEvents: Int, val alertsTriggered: Int,
+    val clinicalAdvice: String
 )
 
 data class ClinicalMoodReport(
@@ -104,10 +162,7 @@ data class ClinicalMoodReport(
     val phq9Score: String, val gad7Score: String, val pssScore: String
 )
 
-data class UserProfile(
-    var age: String, var gender: String, var height: String, var weight: String,
-    var diagnosisDate: String, var insulinUse: String, var hba1c: String
-)
+data class UserProfile(var age: String, var gender: String, var height: String, var weight: String, var diagnosisDate: String, var insulinUse: String, var hba1c: String)
 
 class ReportViewModel : ViewModel() {
     var currentScale = mutableStateOf("日")
@@ -118,43 +173,82 @@ class ReportViewModel : ViewModel() {
     val cgmNodes = mutableStateListOf<CgmNode>()
     val moodNodes = mutableStateListOf<MoodLog>()
 
-    var cgmReport = mutableStateOf(ClinicalCgmReport("With v1 | Day 3", "99%", "6.4", "6.1%", 92, 5, 3, "< 28%", "今日血糖表现极佳，TIR 达标率非常理想。情绪平稳有效支持了血糖控制。"))
-    var moodReport = mutableStateOf(ClinicalMoodReport("7.5", "7.8", "0.9", "Low", 70, 20, 10, "2 (极轻)", "3 (极轻)", "12 (轻度)"))
+    var cgmReport = mutableStateOf(ClinicalCgmReport(
+        deviceInfo = "With v1 | 采样率 3min/次", dataCoverage = "99%",
+        avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
+        sd = "1.2", cv = "18.7% (<36%)", mage = "2.1", gmi = "6.1%",
+        tirTarget = 92, tirHigh = 5, tirLow = 3,
+        tbrLevel1 = "2%", tbrLevel2 = "1% (<3.0)", tarLevel1 = "4%", tarLevel2 = "1% (>13.9)",
+        wearTime = "98%", completeness = "99.5%", signalLoss = "15 min",
+        hypoEvents = 1, hyperEvents = 2, alertsTriggered = 3,
+        clinicalAdvice = "今日血糖极佳，TIR 达标。趋势平稳，无需调整基础率。"
+    ))
 
+    var moodReport = mutableStateOf(ClinicalMoodReport("7.5", "7.8", "0.9", "Low", 70, 20, 10, "2 (极轻)", "3 (极轻)", "12 (轻度)"))
     var userProfile = mutableStateOf(UserProfile("28 岁", "女", "175 cm", "70 kg", "2023 年 5 月", "是", "6.2 %"))
 
     init {
-        cgmNodes.addAll(listOf(CgmNode("08:00", 5.4), CgmNode("12:00", 6.1), CgmNode("18:00", 5.8)))
+        // Mock数据完整填充 5 维度
+        cgmNodes.addAll(listOf(
+            CgmNode("08:00", 5.4, "→", "3min", "0.0"),
+            CgmNode("12:00", 6.1, "↗", "3min", "+0.1"),
+            CgmNode("18:00", 5.8, "↘", "3min", "-0.1")
+        ))
         moodNodes.addAll(listOf(MoodLog("09:00", "清醒", "极佳", 8.5f), MoodLog("15:00", "餐后", "平稳", 7.0f)))
         dietLogs.addAll(listOf(DietEntry("08:30", "全麦面包", "30g", 30f), DietEntry("12:30", "沙拉", "15g", 15f)))
         exerciseLogs.addAll(listOf(ExerciseEntry("09:00", "慢跑", "20min", 20f), ExerciseEntry("18:00", "拉伸", "15min", 15f)))
         hrLogs.addAll(listOf(HeartRateEntry("08:00", 72, "静息"), HeartRateEntry("19:00", 110, "运动")))
     }
 
-    // 🚀 CHAT 自动解析与作图引擎
+    // 🚀 Chatbot 提取全量数据
     fun processChatInput(input: String) {
         val time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-        val extractedNumber = input.filter { it.isDigit() || it == '.' }.toFloatOrNull()
+        val numbers = Regex("(\\d+\\.\\d+|\\d+)").findAll(input).map { it.value.toFloat() }.toList()
+        val firstNum = numbers.firstOrNull()
 
         when {
-            input.contains("吃") || input.contains("餐") || input.contains("饭") -> {
-                val carbs = extractedNumber ?: 40f
+            input.contains("血糖") || input.contains("低血糖") || input.contains("测了") -> {
+                val bg = firstNum ?: 5.5f
+                val trend = if (input.contains("上") || input.contains("升") || input.contains("高")) "↑"
+                else if (input.contains("下") || input.contains("降") || input.contains("低")) "↓" else "→"
+
+                val rateMatch = Regex("(速率|变化).*?([0-9.]+)").find(input)
+                val rateVal = rateMatch?.groupValues?.get(2) ?: "0.0"
+                val rateSign = if (trend == "↓") "-" else if (trend == "↑") "+" else ""
+                val finalRate = if (rateVal == "0.0") "0.0" else "$rateSign$rateVal"
+
+                // 机器人自动填充时间戳和默认采样率
+                cgmNodes.add(CgmNode(time, bg.toDouble(), trend, "3min", finalRate))
+            }
+            input.contains("胰岛素") || input.contains("打针") -> {
+                val units = firstNum ?: 2f
+                dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units))
+            }
+            input.contains("吃") || input.contains("餐") || input.contains("碳水") -> {
+                val carbs = firstNum ?: 40f
                 dietLogs.add(0, DietEntry(time, input, "约 ${carbs}g", carbs))
             }
             input.contains("跑") || input.contains("步") || input.contains("动") -> {
-                val duration = extractedNumber ?: 30f
+                val duration = firstNum ?: 30f
                 exerciseLogs.add(0, ExerciseEntry(time, input, "${duration}min", duration))
             }
             input.contains("心") || input.contains("跳") -> {
-                val bpm = extractedNumber?.toInt() ?: 85
+                val bpm = firstNum?.toInt() ?: 85
                 hrLogs.add(0, HeartRateEntry(time, bpm, "自动识别"))
             }
-            else -> moodNodes.add(0, MoodLog(time, "记录", input, 7.8f))
+            else -> moodNodes.add(0, MoodLog(time, "日常", input, 7.8f))
         }
     }
 
-    fun addDiet(f: String, c: String) { val cv = c.filter { it.isDigit() }.toFloatOrNull() ?: 0f; dietLogs.add(0, DietEntry("现在", f, "${cv}g", cv)) }
-    fun addExercise(a: String, d: String) { val dv = d.filter { it.isDigit() }.toFloatOrNull() ?: 0f; exerciseLogs.add(0, ExerciseEntry("现在", a, "${dv}min", dv)) }
-    fun addHeartRate(b: Int, s: String) { hrLogs.add(0, HeartRateEntry("现在", b, s)) }
+    fun addDiet(f: String, c: String) { val cv = c.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; dietLogs.add(0, DietEntry("手动", f, "${cv}g", cv)) }
+    fun addExercise(a: String, d: String) { val dv = d.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; exerciseLogs.add(0, ExerciseEntry("手动", a, "${dv}min", dv)) }
+    fun addHeartRate(b: Int, s: String) { hrLogs.add(0, HeartRateEntry("手动", b, s)) }
+
+    // 🆕 全量接收弹窗传来的 5 个维度数据！
+    fun addCgmNode(bg: Double, time: String, interval: String, trend: String, rate: String) {
+        val finalTime = time.ifBlank { java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) }
+        val finalInterval = interval.ifBlank { "3min" }
+        cgmNodes.add(CgmNode(finalTime, bg, trend, finalInterval, rate))
+    }
     fun updateProfile(newProfile: UserProfile) { userProfile.value = newProfile }
 }
