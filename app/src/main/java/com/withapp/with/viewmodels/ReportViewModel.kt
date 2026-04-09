@@ -1,126 +1,52 @@
-//
-//package com.withapp.with.viewmodels
-//
-//import androidx.compose.runtime.mutableStateListOf
-//import androidx.lifecycle.ViewModel
-//import java.util.UUID
-//
-//// Data model for health insights
-//data class Insight(
-//    val id: UUID = UUID.randomUUID(),
-//    val title: String,
-//    val description: String,
-//    val icon: String
-//)
-//
-//class ReportViewModel : ViewModel() {
-//    // Observable list for the UI to consume
-//    val insights = mutableStateListOf<Insight>()
-//
-//    // Mock data for the chart: representing glucose levels over time
-//    val glucoseData = listOf(
-//        5.2f, 5.4f, 5.8f, 7.2f, 8.5f, 7.9f, 6.5f, 5.8f,
-//        6.2f, 7.0f, 9.2f, 8.1f, 6.5f, 5.9f, 5.5f, 5.2f,
-//        6.1f, 7.5f, 8.8f, 7.2f, 6.0f, 5.4f, 5.3f, 5.1f
-//    )
-//
-//    init {
-//        loadMockData()
-//    }
-//
-//    private fun loadMockData() {
-//        insights.clear()
-//        insights.addAll(
-//            listOf(
-//                Insight(
-//                    title = "身心共鸣点",
-//                    description = "今天上午 10:20，你的心情愉悦与血糖稳定达到了高度契合。",
-//                    icon = "🎯"
-//                ),
-//                Insight(
-//                    title = "波动预警",
-//                    description = "午餐后血糖上升较快，建议下次餐后增加 10 分钟散步。",
-//                    icon = "🚶"
-//                )
-//            )
-//        )
-//    }
-//}
-
 package com.withapp.with.viewmodels
 
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.util.UUID
-import kotlin.random.Random
 
-data class EnergyDataPoint(val id: UUID = UUID.randomUUID(), val timestamp: Long, val value: Double, val label: String)
-data class RhythmDataPoint(val id: UUID = UUID.randomUUID(), val timestamp: Long, val label: String, val moodScore: Double, val glucoseMmol: Double, val heartRate: Int?)
-data class TimelineEvent(val id: UUID = UUID.randomUUID(), val time: String, val title: String, val description: String, val location: String?, val glucoseValue: Double?, val mood: String?, val emoji: String?)
-data class Insight(val id: UUID = UUID.randomUUID(), val title: String, val description: String, val icon: String)
+data class MoodLog(val timeLabel: String, val label: String, val value: String, val numericScore: Float)
+data class CgmNode(val timeLabel: String, val value: Double)
+data class DietEntry(val time: String, val food: String, val carbs: String)
+data class ExerciseEntry(val time: String, val activity: String, val duration: String)
+data class HeartRateEntry(val time: String, val bpm: Int, val status: String)
+
+data class ClinicalCgmReport(
+    val deviceInfo: String, val dataCoverage: String, val avgGlucose: String, val gmi: String,
+    val tirTarget: Int, val tirHigh: Int, val tirLow: Int, val cv: String, val clinicalAdvice: String
+)
+
+data class ClinicalMoodReport(
+    val meanScore: String, val medianScore: String, val variabilitySD: String, val instabilityIndex: String,
+    val positiveAffect: Int, val neutralAffect: Int, val negativeAffect: Int,
+    val phq9Score: String, val gad7Score: String, val pssScore: String
+)
 
 class ReportViewModel : ViewModel() {
-    val energyData = mutableStateListOf<EnergyDataPoint>()
-    val rhythmData = mutableStateListOf<RhythmDataPoint>()
-    val timelineEvents = mutableStateListOf<TimelineEvent>()
-    val insights = mutableStateListOf<Insight>()
-    var isLoading by mutableStateOf(false)
+    var currentScale = mutableStateOf("日")
+    val dietLogs = mutableStateListOf<DietEntry>()
+    val exerciseLogs = mutableStateListOf<ExerciseEntry>()
+    val hrLogs = mutableStateListOf<HeartRateEntry>()
 
-    init { loadMockData() }
+    // --- DAILY DATA ---
+    val dailyCgmReport = ClinicalCgmReport("With v1 | Day 3", "99%", "6.4", "6.1%", 92, 5, 3, "< 28%", "血糖稳定，TIR 极佳。")
+    val dailyMoodReport = ClinicalMoodReport("7.5", "7.8", "0.9", "Low", 70, 20, 10, "2", "3", "12")
+    val dailyCgmNodes = mutableStateListOf(CgmNode("08:00", 5.4), CgmNode("12:00", 8.2), CgmNode("18:00", 5.8))
+    val dailyMoodNodes = mutableStateListOf(MoodLog("09:00", "清醒", "极佳", 8.5f), MoodLog("15:00", "餐后", "平稳", 7.0f))
 
-    fun loadData(date: Long) {
-        isLoading = true
-        viewModelScope.launch {
-            delay(500)
-            loadMockData()
-            isLoading = false
-        }
+    // --- MONTHLY DATA ---
+    val monthlyCgmReport = ClinicalCgmReport("With v1 | 2 Sensors", "95%", "6.1", "5.9%", 88, 10, 2, "< 32%", "本月表现平稳，注意晚餐。")
+    val monthlyMoodReport = ClinicalMoodReport("6.2", "6.5", "1.8", "Mod", 58, 20, 22, "6", "5", "18")
+    val monthlyCgmNodes = mutableStateListOf(CgmNode("1日", 6.2), CgmNode("15日", 5.9), CgmNode("30日", 6.1))
+    val monthlyMoodNodes = mutableStateListOf(MoodLog("5日", "工作", "高压", 4.0f), MoodLog("20日", "周末", "愉快", 8.8f))
+
+    init {
+        dietLogs.add(DietEntry("08:30", "全麦面包", "30g"))
+        exerciseLogs.add(ExerciseEntry("09:00", "散步", "20min"))
+        hrLogs.add(HeartRateEntry("10:30", 72, "静息"))
     }
 
-    private fun loadMockData() {
-        generateRhythmData()
-        generateTimelineEvents()
-        generateInsights()
-    }
-
-    private fun generateRhythmData() {
-        rhythmData.clear()
-        val now = System.currentTimeMillis()
-        for (hour in 6 until 22) {
-            val moodBase = getBaseEnergy(hour)
-            val mood = (moodBase + Random.nextDouble(-8.0, 8.0)).coerceIn(15.0, 95.0)
-            val glucose = (6.0 + Random.nextDouble(-1.3, 1.7)).coerceIn(3.9, 11.2)
-            val heartRate = if (hour in listOf(10, 15, 19)) Random.nextInt(96, 112) else null
-
-            rhythmData.add(RhythmDataPoint(timestamp = now, label = "$hour:00", moodScore = mood, glucoseMmol = glucose, heartRate = heartRate))
-        }
-    }
-
-    private fun getBaseEnergy(hour: Int): Double = when(hour) {
-        in 6..7 -> 40.0; in 8..9 -> 70.0; in 10..11 -> 80.0
-        in 12..13 -> 55.0; in 14..16 -> 65.0; in 17..18 -> 60.0
-        in 19..21 -> 45.0; else -> 50.0
-    }
-
-    private fun generateTimelineEvents() {
-        timelineEvents.clear()
-        timelineEvents.addAll(listOf(
-            TimelineEvent(time = "7:30", title = "早餐", description = "燕麦与咖啡", location = "家", glucoseValue = 95.0, mood = null, emoji = null),
-            TimelineEvent(time = "12:30", title = "午餐", description = "沙拉与鸡胸肉", location = "餐厅", glucoseValue = 148.0, mood = "平静", emoji = "😌")
-        ))
-    }
-
-    private fun generateInsights() {
-        insights.clear()
-        insights.addAll(listOf(
-            Insight(title = "活动达标", description = "今日步数符合预期", icon = "🏃"),
-            Insight(title = "血糖平稳", description = "午后血糖控制极佳", icon = "🎯")
-        ))
-    }
+    fun addDiet(f: String, c: String) { dietLogs.add(0, DietEntry("现在", f, c)) }
+    fun addExercise(a: String, d: String) { exerciseLogs.add(0, ExerciseEntry("现在", a, d)) }
+    fun addHeartRate(b: Int, s: String) { hrLogs.add(0, HeartRateEntry("现在", b, s)) }
+    fun addMoodLog(l: String, v: String) { dailyMoodNodes.add(0, MoodLog("现在", l, v, 7.5f)) }
 }

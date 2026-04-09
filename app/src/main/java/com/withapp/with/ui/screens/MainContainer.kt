@@ -1,231 +1,63 @@
-//
-//package com.withapp.with.ui.screens
-//
-//import androidx.compose.animation.Crossfade
-//import androidx.compose.foundation.background
-//import androidx.compose.foundation.clickable
-//import androidx.compose.foundation.interaction.MutableInteractionSource
-//import androidx.compose.foundation.layout.*
-//import androidx.compose.foundation.shape.RoundedCornerShape
-//import androidx.compose.material.icons.Icons
-//import androidx.compose.material.icons.filled.*
-//import androidx.compose.material3.*
-//import androidx.compose.runtime.*
-//import androidx.compose.ui.Alignment
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.composed
-//import androidx.compose.ui.draw.shadow
-//import androidx.compose.ui.graphics.Brush
-//import androidx.compose.ui.graphics.Color
-//import androidx.compose.ui.unit.dp
-//import androidx.compose.ui.unit.sp
-//import androidx.lifecycle.viewmodel.compose.viewModel
-//import com.withapp.with.models.AppState
-//import com.withapp.with.viewmodels.ChatViewModel
-//import com.withapp.with.viewmodels.ReportViewModel
-//
-//@Composable
-//fun MainContainer(
-//    appState: AppState = viewModel(),
-//    onRequestPermission: () -> Unit = {}
-//) {
-//    // 核心修复：将这里的 targetState 替换为你 Swift 源码里原生的 isOnboarded！
-//    Crossfade(targetState = appState.isOnboarded, label = "app_flow") { completed ->
-//        if (!completed) {
-//            OnboardingView(appState = appState)
-//        } else {
-//            MainAppLayout(appState = appState, onRequestPermission = onRequestPermission)
-//        }
-//    }
-//}
-//
-//@Composable
-//fun MainAppLayout(appState: AppState, onRequestPermission: () -> Unit) {
-//    var selectedTab by remember { mutableStateOf("home") }
-//    val chatViewModel: ChatViewModel = viewModel()
-//    val reportViewModel: ReportViewModel = viewModel()
-//
-//    val bgGradient = Brush.verticalGradient(
-//        colors = listOf(Color(0xFFF2F9F7), Color(0xFFE6F2F2))
-//    )
-//
-//    Box(modifier = Modifier.fillMaxSize().background(bgGradient)) {
-//        val bottomPadding = if (selectedTab == "chat" || selectedTab == "device") 0.dp else 80.dp
-//
-//        Box(modifier = Modifier.fillMaxSize().padding(bottom = bottomPadding)) {
-//            when (selectedTab) {
-//                "home" -> HomeView(
-//                    appState = appState,
-//                    safePadding = PaddingValues(0.dp),
-//                    onNavigateToChat = { msg ->
-//                        chatViewModel.sendMessage(msg)
-//                        selectedTab = "chat"
-//                    },
-//                    onRequestPermission = onRequestPermission
-//                )
-//                "chat" -> ChatView(
-//                    chatViewModel = chatViewModel,
-//                    onBack = { selectedTab = "home" }
-//                )
-//                "report" -> ReportView(reportViewModel = reportViewModel)
-//                "settings" -> SettingsView(
-//                    appState = appState,
-//                    onNavigateToDevice = { selectedTab = "device" }
-//                )
-//                "device" -> DeviceConnectionView(
-//                    onBack = { selectedTab = "settings" }
-//                )
-//            }
-//        }
-//
-//        if (selectedTab != "chat" && selectedTab != "device") {
-//            Box(modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 20.dp, vertical = 24.dp)) {
-//                Surface(
-//                    modifier = Modifier.fillMaxWidth().height(64.dp).shadow(10.dp, RoundedCornerShape(32.dp)),
-//                    shape = RoundedCornerShape(32.dp),
-//                    color = Color.White.copy(alpha = 0.95f)
-//                ) {
-//                    Row(
-//                        modifier = Modifier.fillMaxSize(),
-//                        horizontalArrangement = Arrangement.SpaceAround,
-//                        verticalAlignment = Alignment.CenterVertically
-//                    ) {
-//                        TabItem(Icons.Default.Home, "首页", selectedTab == "home") { selectedTab = "home" }
-//                        TabItem(Icons.Default.Email, "聊天", selectedTab == "chat") { selectedTab = "chat" }
-//                        TabItem(Icons.Default.DateRange, "报告", selectedTab == "report") { selectedTab = "report" }
-//                        TabItem(Icons.Default.Settings, "设置", selectedTab == "settings") { selectedTab = "settings" }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//@Composable
-//private fun TabItem(
-//    icon: androidx.compose.ui.graphics.vector.ImageVector,
-//    label: String,
-//    isSelected: Boolean,
-//    onClick: () -> Unit
-//) {
-//    val color = if (isSelected) Color(0xFF008080) else Color.Gray
-//    Column(
-//        horizontalAlignment = Alignment.CenterHorizontally,
-//        modifier = Modifier.clickableNoRipple(onClick)
-//    ) {
-//        Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(24.dp))
-//        Text(label, fontSize = 10.sp, color = color)
-//    }
-//}
-//
-//fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier = composed {
-//    this.then(
-//        Modifier.clickable(
-//            interactionSource = remember { MutableInteractionSource() },
-//            indication = null,
-//            onClick = onClick
-//        )
-//    )
-//}
-
 package com.withapp.with.ui.screens
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.withapp.with.models.AppState
-import com.withapp.with.viewmodels.ChatViewModel
 import com.withapp.with.viewmodels.ReportViewModel
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainContainer(
-    appState: AppState = viewModel(),
-    onRequestPermission: () -> Unit = {}
-) {
-    Crossfade(targetState = appState.isOnboarded, label = "app_flow") { completed ->
-        if (!completed) {
-            OnboardingView(appState = appState)
-        } else {
-            MainAppLayout(appState = appState, onRequestPermission = onRequestPermission)
-        }
-    }
-}
-
-@Composable
-fun MainAppLayout(appState: AppState, onRequestPermission: () -> Unit) {
+fun MainContainer(onRequestPermission: () -> Unit = {}) {
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
     var selectedTab by remember { mutableStateOf("home") }
-    val chatViewModel: ChatViewModel = viewModel()
     val reportViewModel: ReportViewModel = viewModel()
 
-    val bgGradient = Brush.verticalGradient(
-        colors = listOf(Color(0xFFF2F9F7), Color(0xFFE6F2F2))
-    )
-
-    Box(modifier = Modifier.fillMaxSize().background(bgGradient)) {
-        // 当进入聊天、设备或设置页时，隐藏底部导航栏
-        val bottomPadding = if (selectedTab == "chat" || selectedTab == "device" || selectedTab == "settings") 0.dp else 80.dp
-
-        Box(modifier = Modifier.fillMaxSize().padding(bottom = bottomPadding)) {
-            when (selectedTab) {
-                "home" -> HomeView(
-                    appState = appState,
-                    safePadding = PaddingValues(0.dp),
-                    onNavigateToChat = { msg ->
-                        chatViewModel.sendMessage(msg)
-                        selectedTab = "chat"
-                    },
-                    onNavigateToSettings = { selectedTab = "settings" }, // 左上角触发
-                    onRequestPermission = onRequestPermission
-                )
-                "chat" -> ChatView(
-                    chatViewModel = chatViewModel,
-                    onBack = { selectedTab = "home" }
-                )
-                "report" -> ReportView(reportViewModel = reportViewModel)
-                "settings" -> SettingsView(
-                    appState = appState,
-                    onBack = { selectedTab = "home" }, // 从设置页返回首页
-                    onNavigateToDevice = { selectedTab = "device" }
-                )
-                "device" -> DeviceConnectionView(
-                    onBack = { selectedTab = "settings" }
-                )
-            }
-        }
-
-        // 底部导航栏（已移除最右侧的设置按钮）
-        if (selectedTab != "chat" && selectedTab != "device" && selectedTab != "settings") {
-            Box(modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 40.dp, vertical = 24.dp)) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth().height(64.dp).shadow(10.dp, RoundedCornerShape(32.dp)),
-                    shape = RoundedCornerShape(32.dp),
-                    color = Color.White.copy(alpha = 0.95f)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.SpaceEvenly, // 均匀分布剩下的3个按钮
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TabItem(Icons.Default.Home, "首页", selectedTab == "home") { selectedTab = "home" }
-                        TabItem(Icons.Default.Email, "聊天", selectedTab == "chat") { selectedTab = "chat" }
-                        TabItem(Icons.Default.DateRange, "报告", selectedTab == "report") { selectedTab = "report" }
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = { ModalDrawerSheet { ProfileSidebarContent() } }
+    ) {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text("With", fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.AccountCircle, null, tint = Color(0xFF008080), modifier = Modifier.size(32.dp))
+                        }
                     }
+                )
+            },
+            bottomBar = {
+                NavigationBar(containerColor = Color.White) {
+                    NavigationBarItem(selected = selectedTab == "home", onClick = { selectedTab = "home" }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("主页") })
+                    NavigationBarItem(selected = selectedTab == "report", onClick = { selectedTab = "report" }, icon = { Icon(Icons.Default.Assessment, null) }, label = { Text("报告") })
+                }
+            }
+        ) { paddingValues ->
+            Box(modifier = Modifier.padding(paddingValues)) {
+                when (selectedTab) {
+                    "home" -> HomeChatCombinedView(reportViewModel)
+                    "report" -> ReportView(reportViewModel = reportViewModel, onBack = { selectedTab = "home" })
                 }
             }
         }
@@ -233,29 +65,67 @@ fun MainAppLayout(appState: AppState, onRequestPermission: () -> Unit) {
 }
 
 @Composable
-private fun RowScope.TabItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val color = if (isSelected) Color(0xFF008080) else Color.Gray
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.weight(1f).clickableNoRipple(onClick) // 让3个按钮等宽分布
-    ) {
-        Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(24.dp))
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(label, fontSize = 10.sp, color = color)
+fun HomeChatCombinedView(reportViewModel: ReportViewModel) {
+    var inputText by remember { mutableStateOf("") }
+    val chatMessages = remember { mutableStateListOf(ChatMessage("你好！我是 With。你可以直接对我说『我吃了午餐』、『刚跑了30分钟』或『心情有点低落』。", false)) }
+
+    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA))) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("陪你看见情绪，也看见血糖", color = Color.Gray, fontSize = 14.sp)
+            Box(modifier = Modifier.size(60.dp).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) { Text("🐰", fontSize = 30.sp) }
+        }
+        LazyColumn(modifier = Modifier.weight(1f).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(chatMessages) { msg -> ChatBubble(message = msg) }
+        }
+        Column(modifier = Modifier.background(Color.White).padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(value = inputText, onValueChange = { inputText = it }, placeholder = { Text("记录此刻...") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(24.dp))
+                IconButton(onClick = {
+                    if (inputText.isNotBlank()) {
+                        val input = inputText
+                        chatMessages.add(ChatMessage(input, true))
+                        when {
+                            input.contains("吃") -> { reportViewModel.addDiet(input, "待估"); chatMessages.add(ChatMessage("饮食已记录并自动同步。", false)) }
+                            input.contains("跑") || input.contains("动") -> { reportViewModel.addExercise(input, "30m"); chatMessages.add(ChatMessage("运动记录已同步。", false)) }
+                            input.contains("心") -> { reportViewModel.addHeartRate(82, "手动"); chatMessages.add(ChatMessage("心率数据已录入。", false)) }
+                            else -> { reportViewModel.addMoodLog("随记", input); chatMessages.add(ChatMessage("心情已保存。", false)) }
+                        }
+                        inputText = ""
+                    }
+                }) { Icon(Icons.AutoMirrored.Filled.Send, null, tint = Color(0xFF008080)) }
+            }
+        }
     }
 }
 
-fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier = composed {
-    this.then(
-        Modifier.clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null,
-            onClick = onClick
-        )
-    )
+@Composable
+fun ProfileSidebarContent() {
+    val scrollState = rememberScrollState()
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(24.dp)) {
+        Text("个人档案", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080))
+        Spacer(Modifier.height(24.dp))
+
+        Text("基本信息", fontWeight = FontWeight.Bold, color = Color(0xFF008080), fontSize = 14.sp)
+        ProfileDataItem("年龄", "28 岁")
+        ProfileDataItem("性别", "女")
+        ProfileDataItem("身高", "175 cm")
+        ProfileDataItem("体重", "70 kg")
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+        Text("健康背景", fontWeight = FontWeight.Bold, color = Color(0xFF008080), fontSize = 14.sp)
+        ProfileDataItem("确诊时间", "2023 年 5 月")
+        ProfileDataItem("使用胰岛素", "是")
+        ProfileDataItem("最近 HbA1c", "6.2 %")
+
+        Spacer(Modifier.weight(1f))
+        Text("With v2.0 - 始终同行", color = Color.LightGray, fontSize = 12.sp)
+    }
+}
+
+@Composable
+fun ProfileDataItem(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, color = Color.Gray); Text(value, fontWeight = FontWeight.Medium)
+    }
 }
