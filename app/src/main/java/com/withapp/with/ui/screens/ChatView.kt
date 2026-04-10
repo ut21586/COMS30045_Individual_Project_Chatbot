@@ -101,36 +101,6 @@ fun ChatView(
     }
 }
 
-// Data class for local UI state
-data class ChatMessage(val text: String, val isUser: Boolean)
-
-@Composable
-fun ChatBubble(message: ChatMessage) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
-    ) {
-        Surface(
-            shape = RoundedCornerShape(
-                topStart = 16.dp,
-                topEnd = 16.dp,
-                bottomStart = if (message.isUser) 16.dp else 4.dp,
-                bottomEnd = if (message.isUser) 4.dp else 16.dp
-            ),
-            color = if (message.isUser) Color(0xFF008080) else Color.White,
-            shadowElevation = 1.dp,
-            modifier = Modifier.widthIn(max = 280.dp)
-        ) {
-            Text(
-                text = message.text,
-                modifier = Modifier.padding(12.dp),
-                color = if (message.isUser) Color.White else Color.Black,
-                fontSize = 14.sp
-            )
-        }
-    }
-}
-
 // Helper function to simulate RP-06: Real-time feedback based on keywords
 fun generateImmediateFeedback(userInput: String): String {
     return when {

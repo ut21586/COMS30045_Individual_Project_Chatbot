@@ -29,13 +29,15 @@
 //@Composable
 //fun ReportView(reportViewModel: ReportViewModel, onBack: () -> Unit = {}) {
 //    val scrollState = rememberScrollState()
+//    val currentScale = reportViewModel.currentScale.value
+//
 //    val cgmNodes = reportViewModel.cgmNodes
 //    val moodNodes = reportViewModel.moodNodes
 //    val cgmRep = reportViewModel.cgmReport.value
 //    val moodRep = reportViewModel.moodReport.value
 //
 //    var showCgmDialog by remember { mutableStateOf(false) }
-//    var showMoodDialog by remember { mutableStateOf(false) } // 🆕 情绪弹窗
+//    var showMoodDialog by remember { mutableStateOf(false) }
 //    var showDietDialog by remember { mutableStateOf(false) }
 //    var showExerciseDialog by remember { mutableStateOf(false) }
 //    var showHrDialog by remember { mutableStateOf(false) }
@@ -54,14 +56,18 @@
 //            }
 //            ClinicalCgmCard(cgmRep, cgmNodes)
 //
-//            // 🧠 SECTION 2: 精密情绪指标 (新增 + 按钮)
+//            // 🧠 SECTION 2: 情绪指标
 //            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
 //                Text("🧠 核心情绪追踪与记录", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFFFFB74D))
 //                IconButton(onClick = { showMoodDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFFFFB74D).copy(0.1f), CircleShape)) { Icon(Icons.Default.Add, null, tint = Color(0xFFFFB74D), modifier = Modifier.size(18.dp)) }
 //            }
 //            ClinicalMoodCard(moodRep, moodNodes)
 //
-//            // 🛡️ SECTION 3: 实时滑动图表记录
+//            // 🔄 SECTION 3: 血糖与情绪双轴关联对比图
+//            Text("🔄 交叉分析：血糖与情绪关联对比", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF673AB7))
+//            CorrelationChartCard(cgmNodes, moodNodes)
+//
+//            // 🛡️ SECTION 4: 行为数据走势
 //            Text("🛡️ 行为/上下文数据走势", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF5C6BC0))
 //            HealthListCard("🍏 饮食与胰岛素", Color(0xFF81C784), reportViewModel.dietLogs.toList(), { showDietDialog = true }, { it.numericValue }, { "${it.time} - ${it.food} (${it.carbs})" })
 //            HealthListCard("🏃 运动与睡眠", Color(0xFF4FC3F7), reportViewModel.exerciseLogs.toList(), { showExerciseDialog = true }, { it.numericValue }, { "${it.time} - ${it.activity} (${it.duration})" })
@@ -70,13 +76,13 @@
 //            Spacer(Modifier.height(40.dp))
 //        }
 //
-//        // 🚀 弹窗大满贯：包括全新的情绪精准打分弹窗
+//        // 🚀 极简输入弹窗
 //        if (showCgmDialog) {
 //            var v1 by remember { mutableStateOf("") }; var v2 by remember { mutableStateOf("") }
 //            AlertDialog(onDismissRequest = { showCgmDialog = false },
-//                title = { Text("添加实时CGM数据", fontWeight = FontWeight.Bold) },
+//                title = { Text("添加实时CGM", fontWeight = FontWeight.Bold) },
 //                text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { OutlinedTextField(v1, {v1=it}, label={Text("血糖值 (mmol/L)")}, modifier = Modifier.fillMaxWidth()); OutlinedTextField(v2, {v2=it}, label={Text("时间戳 (可选，格式: 14:30)")}, modifier = Modifier.fillMaxWidth()) } },
-//                confirmButton = { Button(onClick = { reportViewModel.addCgmNode(v1.toDoubleOrNull() ?: 5.5, v2); showCgmDialog = false }) { Text("添加并自动推演") } }
+//                confirmButton = { Button(onClick = { reportViewModel.addCgmNode(v1.toDoubleOrNull() ?: 5.5, v2); showCgmDialog = false }) { Text("添加并自动推算") } }
 //            )
 //        }
 //        if (showMoodDialog) {
@@ -89,7 +95,74 @@
 //        }
 //        if (showDietDialog) InputDialog("添加上下文数据", "项目", "数值") { v1, v2 -> reportViewModel.addDiet(v1, v2); showDietDialog = false }
 //        if (showExerciseDialog) InputDialog("添加运动", "项目", "时长(min)") { v1, v2 -> reportViewModel.addExercise(v1, v2); showExerciseDialog = false }
+//
+//        // ✅ 核心修复：安全转换 String -> Int 避免报错
 //        if (showHrDialog) InputDialog("添加心率", "BPM", "状态") { v1, v2 -> reportViewModel.addHeartRate(v1.toIntOrNull() ?: 75, v2); showHrDialog = false }
+//    }
+//}
+//
+//@Composable
+//fun CorrelationChartCard(cgmNodes: List<CgmNode>, moodNodes: List<MoodLog>) {
+//    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+//        Column(modifier = Modifier.padding(16.dp)) {
+//            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+//                Text("🟢 血糖 (mmol/L)", color = Color(0xFF008080), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+//                Text("🟣 情绪 (0-10 分)", color = Color(0xFF7986CB), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+//            }
+//            Spacer(Modifier.height(12.dp))
+//
+//            val allTimes = (cgmNodes.map { it.timeLabel } + moodNodes.map { it.timeLabel }).distinct().sorted()
+//            if (allTimes.isEmpty()) {
+//                Text("暂无足量数据进行关联分析", color = Color.Gray, fontSize = 12.sp)
+//                return@Column
+//            }
+//
+//            Box(modifier = Modifier.fillMaxWidth().height(250.dp).background(Color(0xFFFAFAFA), RoundedCornerShape(8.dp)).padding(8.dp)) {
+//                Canvas(modifier = Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).width((allTimes.size * 100).coerceAtLeast(350).dp)) {
+//                    val w = size.width; val h = size.height
+//
+//                    fun scaleCgm(v: Double) = h * 0.85f - ((v / 15.0) * (h * 0.7f)).toFloat()
+//                    fun scaleMood(v: Float) = h * 0.85f - ((v / 10f) * (h * 0.7f))
+//
+//                    val gridPaint = android.graphics.Paint().apply { textSize = 20f; color = android.graphics.Color.LTGRAY }
+//                    drawLine(Color.LightGray.copy(alpha=0.3f), Offset(0f, scaleCgm(10.0)), Offset(w, scaleCgm(10.0)), strokeWidth=2f)
+//                    drawLine(Color.LightGray.copy(alpha=0.3f), Offset(0f, scaleCgm(3.9)), Offset(w, scaleCgm(3.9)), strokeWidth=2f)
+//
+//                    var lastCgm: Offset? = null; var lastMood: Offset? = null
+//                    val textPaint = android.graphics.Paint().apply { textSize = 24f; isFakeBoldText = true }
+//
+//                    allTimes.forEachIndexed { i, time ->
+//                        val x = if (allTimes.size > 1) (i.toFloat() / (allTimes.size - 1)) * (w - 80f) + 40f else w / 2
+//
+//                        drawContext.canvas.nativeCanvas.drawText(time, x - 25f, h - 5f, android.graphics.Paint().apply { textSize = 22f; color = android.graphics.Color.GRAY })
+//
+//                        val cgmNode = cgmNodes.find { it.timeLabel == time }
+//                        if (cgmNode != null) {
+//                            val y = scaleCgm(cgmNode.value)
+//                            val current = Offset(x, y)
+//                            if (lastCgm != null) drawLine(Color(0xFF008080).copy(0.7f), lastCgm!!, current, 4f)
+//                            drawCircle(Color(0xFF008080), 8f, current)
+//                            textPaint.color = android.graphics.Color.parseColor("#008080")
+//                            drawContext.canvas.nativeCanvas.drawText("${cgmNode.value}${cgmNode.trend}", x - 20f, y - 15f, textPaint)
+//                            lastCgm = current
+//                        }
+//
+//                        val moodNode = moodNodes.find { it.timeLabel == time }
+//                        if (moodNode != null) {
+//                            val y = scaleMood(moodNode.numericScore)
+//                            val current = Offset(x, y)
+//                            if (lastMood != null) drawLine(Color(0xFF7986CB).copy(0.7f), lastMood!!, current, 4f)
+//                            drawCircle(Color(0xFF7986CB), 8f, current)
+//                            textPaint.color = android.graphics.Color.parseColor("#7986CB")
+//                            drawContext.canvas.nativeCanvas.drawText("${moodNode.numericScore}", x + 10f, y + 20f, textPaint)
+//                            lastMood = current
+//                        }
+//                    }
+//                }
+//            }
+//            Spacer(Modifier.height(8.dp))
+//            Text("💡 提示：在同一时间节点记录的数据越多，关联趋势越精准。", fontSize = 11.sp, color = Color.Gray)
+//        }
 //    }
 //}
 //
@@ -103,13 +176,13 @@
 //                    Text("🟢 实时与推算数据 (Raw Data)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF2E7D32))
 //                    Spacer(Modifier.height(10.dp))
 //                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-//                        MetricItem("当前血糖", "${latest.value} mmol/L")
+//                        MetricItem("当前血糖值", "${latest.value} mmol/L")
 //                        MetricItem("时间戳", latest.timeLabel)
 //                        MetricItem("采样间隔", latest.samplingInterval)
 //                    }
 //                    Spacer(Modifier.height(10.dp))
 //                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-//                        MetricItem("系统趋势", latest.trend)
+//                        MetricItem("系统推演趋势", latest.trend)
 //                        MetricItem("系统推演速率", "${latest.rateOfChange} /min")
 //                    }
 //                }
@@ -119,6 +192,7 @@
 //                Column(horizontalAlignment = Alignment.End) { Text("完整率", fontSize = 10.sp, color = Color.Gray); Text(report.completeness, fontSize = 12.sp, color = Color(0xFF008080)) }
 //            }
 //            HorizontalDivider(color = Color(0xFFF1F1F1))
+//            Text("📈 统计汇总数据", fontWeight = FontWeight.Bold, fontSize = 13.sp)
 //            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
 //                MetricItem("平均血糖", report.avgGlucose); MetricItem("波动 CV", report.cv); MetricItem("MAGE", report.mage)
 //            }
@@ -133,7 +207,6 @@
 //                    Text("TBR (<3.9): ${report.tbrLevel1}", fontSize = 10.sp); Text("TIR: ${report.tirTarget}%", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF4CAF50)); Text("TAR (>10): ${report.tarLevel1}", fontSize = 10.sp)
 //                }
 //            }
-//
 //            Text("📍 AGP 专业走势图", fontWeight = FontWeight.Bold, fontSize = 14.sp)
 //            Box(modifier = Modifier.fillMaxWidth().height(220.dp).background(Color(0xFFFAFAFA), RoundedCornerShape(8.dp)).padding(8.dp)) {
 //                Canvas(modifier = Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).width((nodes.size * 120).coerceAtLeast(350).dp)) {
@@ -156,7 +229,7 @@
 //                            drawContext.canvas.nativeCanvas.drawText(n.timeLabel, x - 25f, h - 5f, gridPaint)
 //                            drawContext.canvas.nativeCanvas.drawText("${n.value} ${n.trend}", x - 30f, y - 18f, android.graphics.Paint().apply { textSize = 26f; isFakeBoldText = true; color = android.graphics.Color.DKGRAY })
 //                        }
-//                        drawPath(path, Color(0xFF008080), style = Stroke(5f))
+//                        drawPath(path, Color(0xFF008080), style = Stroke(4f))
 //                    }
 //                }
 //            }
@@ -164,7 +237,6 @@
 //    }
 //}
 //
-//// 🧠 史诗级重构：情绪曲线现在拥有极其精确的【网格、时间、分数、标签】！
 //@Composable
 //fun ClinicalMoodCard(report: ClinicalMoodReport, nodes: List<MoodLog>) {
 //    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -183,45 +255,21 @@
 //            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
 //                Text("PHQ-9: ${report.phq9Score}", fontSize = 11.sp); Text("GAD-7: ${report.gad7Score}", fontSize = 11.sp); Text("PSS: ${report.pssScore}", fontSize = 11.sp)
 //            }
-//
-//            // 🧠 全新高精度情绪走势图
-//            Text("📍 情绪曲线走势图", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-//            Box(modifier = Modifier.fillMaxWidth().height(200.dp).background(Color(0xFFFAFAFA), RoundedCornerShape(8.dp)).padding(8.dp)) {
-//                Canvas(modifier = Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).width((nodes.size * 120).coerceAtLeast(350).dp)) {
-//                    val w = size.width; val h = size.height
-//                    fun scaleY(score: Float) = h - (score / 10f) * (h * 0.8f) - (h * 0.1f)
-//
-//                    // 绘制情绪底纹辅助线
-//                    val gridPaint = android.graphics.Paint().apply { textSize = 22f; color = android.graphics.Color.GRAY }
-//                    listOf(10f, 7.5f, 5f, 0f).forEach { yVal ->
-//                        val y = scaleY(yVal)
-//                        drawLine(Color.LightGray.copy(alpha=0.3f), Offset(0f, y), Offset(w, y), strokeWidth = 2f)
-//                        drawContext.canvas.nativeCanvas.drawText("$yVal", 5f, y - 5f, gridPaint)
+//            Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+//                Canvas(modifier = Modifier.width((nodes.size * 80).coerceAtLeast(300).dp).height(140.dp)) {
+//                    val ep = android.graphics.Paint().apply { textSize = 40f }
+//                    drawContext.canvas.nativeCanvas.drawText("😊", 0f, 40f, ep); drawContext.canvas.nativeCanvas.drawText("😞", 0f, size.height, ep)
+//                    val p = Path()
+//                    nodes.forEachIndexed { i, n ->
+//                        val x = if(nodes.size > 1) (i.toFloat() / (nodes.size - 1)) * size.width else size.width / 2
+//                        val y = size.height - (n.numericScore / 10f) * size.height
+//                        if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
+//                        drawCircle(Color(0xFF90CAF9), 10f, Offset(x, y))
+//                        drawContext.canvas.nativeCanvas.drawText("${n.numericScore}", x-15f, y-15f, android.graphics.Paint().apply { textSize = 24f; color = android.graphics.Color.DKGRAY })
 //                    }
-//
-//                    val ep = android.graphics.Paint().apply { textSize = 45f }
-//                    drawContext.canvas.nativeCanvas.drawText("😊", 30f, scaleY(9.5f), ep)
-//                    drawContext.canvas.nativeCanvas.drawText("😞", 30f, scaleY(1f), ep)
-//
-//                    if (nodes.isNotEmpty()) {
-//                        val p = Path()
-//                        nodes.forEachIndexed { i, n ->
-//                            val x = if(nodes.size > 1) (i.toFloat() / (nodes.size - 1)) * (w - 80f) + 40f else w / 2
-//                            val y = scaleY(n.numericScore)
-//                            if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
-//
-//                            drawCircle(Color(0xFF7986CB), 10f, Offset(x, y))
-//                            drawCircle(Color.White, 5f, Offset(x, y))
-//
-//                            // 精确标示 X轴时间 和 数据点分数与标签
-//                            drawContext.canvas.nativeCanvas.drawText(n.timeLabel, x - 25f, h - 5f, gridPaint)
-//                            drawContext.canvas.nativeCanvas.drawText("${n.numericScore} ${n.label}", x - 35f, y - 20f, android.graphics.Paint().apply { textSize = 24f; isFakeBoldText = true; color = android.graphics.Color.DKGRAY })
-//                        }
-//                        drawPath(p, Color(0xFF7986CB), style = Stroke(5f))
-//                    }
+//                    drawPath(p, Color(0xFF7986CB), style = Stroke(5f))
 //                }
 //            }
-//
 //            Spacer(Modifier.height(8.dp))
 //            Text("情绪历史追溯 (${nodes.size} 条)", fontSize = 12.sp, color = Color.Gray)
 //            Column(modifier = Modifier.fillMaxWidth().heightIn(max = 140.dp).verticalScroll(rememberScrollState())) {
@@ -360,7 +408,7 @@ fun ReportView(reportViewModel: ReportViewModel, onBack: () -> Unit = {}) {
             }
             ClinicalMoodCard(moodRep, moodNodes)
 
-            // 🔄 SECTION 3: 全新加装 —— 血糖与情绪双轴关联对比图！
+            // 🔄 SECTION 3: 血糖与情绪双轴关联对比图
             Text("🔄 交叉分析：血糖与情绪关联对比", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF673AB7))
             CorrelationChartCard(cgmNodes, moodNodes)
 
@@ -396,7 +444,6 @@ fun ReportView(reportViewModel: ReportViewModel, onBack: () -> Unit = {}) {
     }
 }
 
-// 🆕 全新加装的组件：双轴并轨交叉分析图表！
 @Composable
 fun CorrelationChartCard(cgmNodes: List<CgmNode>, moodNodes: List<MoodLog>) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -420,7 +467,6 @@ fun CorrelationChartCard(cgmNodes: List<CgmNode>, moodNodes: List<MoodLog>) {
                     fun scaleCgm(v: Double) = h * 0.85f - ((v / 15.0) * (h * 0.7f)).toFloat()
                     fun scaleMood(v: Float) = h * 0.85f - ((v / 10f) * (h * 0.7f))
 
-                    // 画基准辅助线
                     val gridPaint = android.graphics.Paint().apply { textSize = 20f; color = android.graphics.Color.LTGRAY }
                     drawLine(Color.LightGray.copy(alpha=0.3f), Offset(0f, scaleCgm(10.0)), Offset(w, scaleCgm(10.0)), strokeWidth=2f)
                     drawLine(Color.LightGray.copy(alpha=0.3f), Offset(0f, scaleCgm(3.9)), Offset(w, scaleCgm(3.9)), strokeWidth=2f)
@@ -431,10 +477,8 @@ fun CorrelationChartCard(cgmNodes: List<CgmNode>, moodNodes: List<MoodLog>) {
                     allTimes.forEachIndexed { i, time ->
                         val x = if (allTimes.size > 1) (i.toFloat() / (allTimes.size - 1)) * (w - 80f) + 40f else w / 2
 
-                        // 画时间刻度
                         drawContext.canvas.nativeCanvas.drawText(time, x - 25f, h - 5f, android.graphics.Paint().apply { textSize = 22f; color = android.graphics.Color.GRAY })
 
-                        // 画 CGM 曲线 (蓝绿色)
                         val cgmNode = cgmNodes.find { it.timeLabel == time }
                         if (cgmNode != null) {
                             val y = scaleCgm(cgmNode.value)
@@ -446,7 +490,6 @@ fun CorrelationChartCard(cgmNodes: List<CgmNode>, moodNodes: List<MoodLog>) {
                             lastCgm = current
                         }
 
-                        // 画 情绪 曲线 (紫色)
                         val moodNode = moodNodes.find { it.timeLabel == time }
                         if (moodNode != null) {
                             val y = scaleMood(moodNode.numericScore)
@@ -466,7 +509,6 @@ fun CorrelationChartCard(cgmNodes: List<CgmNode>, moodNodes: List<MoodLog>) {
     }
 }
 
-// ---- 原样保留：没有任何删减的图表组件 ----
 @Composable
 fun ClinicalCgmCard(report: ClinicalCgmReport, nodes: List<CgmNode>) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -556,30 +598,19 @@ fun ClinicalMoodCard(report: ClinicalMoodReport, nodes: List<MoodLog>) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("PHQ-9: ${report.phq9Score}", fontSize = 11.sp); Text("GAD-7: ${report.gad7Score}", fontSize = 11.sp); Text("PSS: ${report.pssScore}", fontSize = 11.sp)
             }
-            Text("📍 情绪曲线走势图", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Box(modifier = Modifier.fillMaxWidth().height(200.dp).background(Color(0xFFFAFAFA), RoundedCornerShape(8.dp)).padding(8.dp)) {
-                Canvas(modifier = Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).width((nodes.size * 120).coerceAtLeast(350).dp)) {
-                    val w = size.width; val h = size.height
-                    fun scaleY(score: Float) = h - (score / 10f) * (h * 0.8f) - (h * 0.1f)
-                    val gridPaint = android.graphics.Paint().apply { textSize = 22f; color = android.graphics.Color.GRAY }
-                    listOf(10f, 7.5f, 5f, 0f).forEach { yVal ->
-                        val y = scaleY(yVal); drawLine(Color.LightGray.copy(alpha=0.3f), Offset(0f, y), Offset(w, y), strokeWidth = 2f)
-                        drawContext.canvas.nativeCanvas.drawText("$yVal", 5f, y - 5f, gridPaint)
+            Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                Canvas(modifier = Modifier.width((nodes.size * 80).coerceAtLeast(300).dp).height(140.dp)) {
+                    val ep = android.graphics.Paint().apply { textSize = 40f }
+                    drawContext.canvas.nativeCanvas.drawText("😊", 0f, 40f, ep); drawContext.canvas.nativeCanvas.drawText("😞", 0f, size.height, ep)
+                    val p = Path()
+                    nodes.forEachIndexed { i, n ->
+                        val x = if(nodes.size > 1) (i.toFloat() / (nodes.size - 1)) * size.width else size.width / 2
+                        val y = size.height - (n.numericScore / 10f) * size.height
+                        if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
+                        drawCircle(Color(0xFF90CAF9), 10f, Offset(x, y))
+                        drawContext.canvas.nativeCanvas.drawText("${n.numericScore}", x-15f, y-15f, android.graphics.Paint().apply { textSize = 24f; color = android.graphics.Color.DKGRAY })
                     }
-                    val ep = android.graphics.Paint().apply { textSize = 45f }
-                    drawContext.canvas.nativeCanvas.drawText("😊", 30f, scaleY(9.5f), ep); drawContext.canvas.nativeCanvas.drawText("😞", 30f, scaleY(1f), ep)
-                    if (nodes.isNotEmpty()) {
-                        val p = Path()
-                        nodes.forEachIndexed { i, n ->
-                            val x = if(nodes.size > 1) (i.toFloat() / (nodes.size - 1)) * (w - 80f) + 40f else w / 2
-                            val y = scaleY(n.numericScore)
-                            if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
-                            drawCircle(Color(0xFF7986CB), 10f, Offset(x, y)); drawCircle(Color.White, 5f, Offset(x, y))
-                            drawContext.canvas.nativeCanvas.drawText(n.timeLabel, x - 25f, h - 5f, gridPaint)
-                            drawContext.canvas.nativeCanvas.drawText("${n.numericScore} ${n.label}", x - 35f, y - 20f, android.graphics.Paint().apply { textSize = 24f; isFakeBoldText = true; color = android.graphics.Color.DKGRAY })
-                        }
-                        drawPath(p, Color(0xFF7986CB), style = Stroke(5f))
-                    }
+                    drawPath(p, Color(0xFF7986CB), style = Stroke(5f))
                 }
             }
             Spacer(Modifier.height(8.dp))
