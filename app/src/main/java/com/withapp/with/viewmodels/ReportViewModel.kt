@@ -5,20 +5,19 @@
 //import androidx.compose.runtime.mutableStateOf
 //import androidx.lifecycle.ViewModel
 //
-//// --- 🚫 严禁重复定义：全局唯一数据模型 ---
+//// --- 🚫 全局唯一数据模型 ---
 //data class HealthLog(val timeLabel: String, val type: String, val desc: String, val value: String)
 //data class MoodLog(val timeLabel: String, val label: String, val value: String, val numericScore: Float)
 //data class DietEntry(val time: String, val food: String, val carbs: String, val numericValue: Float)
 //data class ExerciseEntry(val time: String, val activity: String, val duration: String, val numericValue: Float)
 //data class HeartRateEntry(val time: String, val bpm: Int, val status: String)
 //
-//// 🩸 终极升级：精准对标 Screenshot 22:22:03 的【实时与原始数据】
 //data class CgmNode(
-//    val timeLabel: String,             // 1. 时间戳 (Timestamp)
-//    val value: Double,                 // 2. 当前血糖值 (Glucose)
-//    val trend: String = "→",           // 3. 趋势箭头 (Trend Arrow)
-//    val samplingInterval: String,      // 4. 采样时间间隔 (Sampling Interval)
-//    val rateOfChange: String           // 5. 血糖变化速率 (Rate of Change)
+//    val timeLabel: String,
+//    val value: Double,
+//    val trend: String = "→",
+//    val samplingInterval: String,
+//    val rateOfChange: String
 //)
 //
 //data class ClinicalCgmReport(
@@ -65,7 +64,6 @@
 //    var userProfile = mutableStateOf(UserProfile("28 岁", "女", "175 cm", "70 kg", "2023 年 5 月", "是", "6.2 %"))
 //
 //    init {
-//        // 初始化 CGM 数据 (加入采样率和变化速率)
 //        cgmNodes.addAll(listOf(
 //            CgmNode("08:00", 5.4, "→", "3min", "0.0"),
 //            CgmNode("12:00", 6.1, "↗", "3min", "+0.1"),
@@ -77,50 +75,81 @@
 //        hrLogs.addAll(listOf(HeartRateEntry("08:00", 72, "静息"), HeartRateEntry("19:00", 110, "运动")))
 //    }
 //
-//    // 🚀 THE MAGIC SYNC ENGINE (全面支持新血糖底层数据解析)
+//    // 🚀 终极智能提取引擎：支持同一句话中包含多种意图，全部独立解析，绝不漏记！
 //    fun processChatInput(input: String) {
 //        val time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-//        val extractedNumber = input.filter { it.isDigit() || it == '.' }.toFloatOrNull()
+//        var matchedSomething = false
 //
-//        when {
-//            input.contains("血糖") || input.contains("低血糖") || input.contains("测了") -> {
-//                val bg = extractedNumber ?: 5.5f
-//                val trend = if (input.contains("上") || input.contains("升")) "↑" else if (input.contains("下") || input.contains("降")) "↓" else "→"
-//                val rate = if (input.contains("速率")) input.substringAfter("速率").filter { it.isDigit() || it == '.' }.take(3) else "0.0"
-//                cgmNodes.add(CgmNode(time, bg.toDouble(), trend, "3min", if(rate.isBlank()) "0.0" else rate))
-//            }
-//            input.contains("胰岛素") || input.contains("打针") -> {
-//                val units = extractedNumber ?: 2f
-//                dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units))
-//            }
-//            input.contains("吃") || input.contains("餐") || input.contains("碳水") -> {
-//                val carbs = extractedNumber ?: 40f
-//                dietLogs.add(0, DietEntry(time, input, "约 ${carbs}g", carbs))
-//            }
-//            input.contains("跑") || input.contains("步") || input.contains("动") -> {
-//                val duration = extractedNumber ?: 30f
-//                exerciseLogs.add(0, ExerciseEntry(time, input, "${duration}min", duration))
-//            }
-//            input.contains("心") || input.contains("跳") -> {
-//                val bpm = extractedNumber?.toInt() ?: 85
-//                hrLogs.add(0, HeartRateEntry(time, bpm, "自动识别"))
-//            }
-//            else -> moodNodes.add(0, MoodLog(time, "日常", input, 7.8f))
+//        // 1. 解析血糖 CGM
+//        if (Regex("血糖|低血糖|高血糖|测了|mmol").containsMatchIn(input)) {
+//            // 在关键字附近寻找数字
+//            val bgMatch = Regex("(\\d+\\.\\d+|\\d+)").find(input.substringAfter(Regex("血糖|测了").find(input)?.value ?: ""))
+//            val bg = bgMatch?.value?.toDoubleOrNull() ?: run { Regex("(\\d+\\.\\d+|\\d+)").find(input)?.value?.toDoubleOrNull() ?: 5.5 }
+//
+//            val trend = if (Regex("上|升|高|↑").containsMatchIn(input)) "↑"
+//            else if (Regex("下|降|低|↓").containsMatchIn(input)) "↓" else "→"
+//
+//            val rateMatch = Regex("(速率|变化)[^\\d+-]*([+-]?\\d+\\.\\d+|[+-]?\\d+)").find(input)
+//            val rateVal = rateMatch?.groupValues?.get(2) ?: "0.0"
+//            val rateSign = if (trend == "↓" && !rateVal.startsWith("-")) "-" else if (trend == "↑" && !rateVal.startsWith("+") && rateVal != "0.0") "+" else ""
+//            val finalRate = if (rateVal == "0.0") "0.0" else if(rateVal.startsWith("+") || rateVal.startsWith("-")) rateVal else "$rateSign$rateVal"
+//
+//            cgmNodes.add(CgmNode(time, bg, trend, "3min", finalRate))
+//            matchedSomething = true
+//        }
+//
+//        // 2. 解析胰岛素 (属于饮食上下文行为)
+//        if (Regex("胰岛素|打针|单位|U").containsMatchIn(input)) {
+//            val unitMatch = Regex("(\\d+\\.\\d+|\\d+)").find(input.substringAfter(Regex("胰岛素|打针").find(input)?.value ?: ""))
+//            val units = unitMatch?.value?.toFloatOrNull() ?: Regex("(\\d+\\.\\d+|\\d+)").find(input)?.value?.toFloatOrNull() ?: 2f
+//            dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units))
+//            matchedSomething = true
+//        }
+//
+//        // 3. 解析饮食碳水
+//        if (Regex("吃|餐|饭|喝|碳水").containsMatchIn(input)) {
+//            val carbMatch = Regex("(\\d+\\.\\d+|\\d+)").find(input.substringAfter(Regex("吃|餐|饭|碳水").find(input)?.value ?: ""))
+//            val carbs = carbMatch?.value?.toFloatOrNull() ?: Regex("(\\d+\\.\\d+|\\d+)").find(input)?.value?.toFloatOrNull() ?: 40f
+//            dietLogs.add(0, DietEntry(time, "餐饮记录", "约 ${carbs}g", carbs))
+//            matchedSomething = true
+//        }
+//
+//        // 4. 解析运动
+//        if (Regex("跑|步|动|锻炼|健身|游泳|骑车").containsMatchIn(input)) {
+//            val exMatch = Regex("(\\d+\\.\\d+|\\d+)").find(input.substringAfter(Regex("跑|步|动|锻炼").find(input)?.value ?: ""))
+//            val duration = exMatch?.value?.toFloatOrNull() ?: Regex("(\\d+\\.\\d+|\\d+)").find(input)?.value?.toFloatOrNull() ?: 30f
+//            exerciseLogs.add(0, ExerciseEntry(time, "运动行为", "${duration}min", duration))
+//            matchedSomething = true
+//        }
+//
+//        // 5. 解析心率
+//        if (Regex("心|跳|bpm|BPM").containsMatchIn(input)) {
+//            val hrMatch = Regex("(\\d{2,3})").find(input)
+//            val bpm = hrMatch?.value?.toIntOrNull() ?: 85
+//            hrLogs.add(0, HeartRateEntry(time, bpm, "自动提取"))
+//            matchedSomething = true
+//        }
+//
+//        // 6. 解析情绪 (如果包含了情绪关键字，或者上面啥都没匹配到)
+//        val moodKeywords = Regex("心情|情绪|开心|高兴|爽|好|难过|生气|郁闷|压力|累|烦|平稳|平静|差")
+//        if (moodKeywords.containsMatchIn(input) || !matchedSomething) {
+//            val score = if (Regex("开心|高兴|爽|好").containsMatchIn(input)) 8.5f
+//            else if (Regex("难过|生气|郁闷|烦|差").containsMatchIn(input)) 4.0f
+//            else 7.0f
+//            moodNodes.add(0, MoodLog(time, "状态记录", input, score))
 //        }
 //    }
 //
 //    fun addDiet(f: String, c: String) { val cv = c.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; dietLogs.add(0, DietEntry("手动", f, "${cv}g", cv)) }
 //    fun addExercise(a: String, d: String) { val dv = d.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; exerciseLogs.add(0, ExerciseEntry("手动", a, "${dv}min", dv)) }
 //    fun addHeartRate(b: Int, s: String) { hrLogs.add(0, HeartRateEntry("手动", b, s)) }
-//
-//    // 🆕 增强的手动添加血糖方法
-//    fun addCgmNode(bg: Double, trend: String, rate: String) {
-//        val time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-//        cgmNodes.add(CgmNode(time, bg, trend, "3min", rate))
+//    fun addCgmNode(bg: Double, time: String, interval: String, trend: String, rate: String) {
+//        val finalTime = time.ifBlank { java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) }
+//        val finalInterval = interval.ifBlank { "3min" }
+//        cgmNodes.add(CgmNode(finalTime, bg, trend, finalInterval, rate))
 //    }
 //    fun updateProfile(newProfile: UserProfile) { userProfile.value = newProfile }
 //}
-
 
 package com.withapp.with.viewmodels
 
@@ -128,20 +157,19 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 
-// --- GLOBAL DATA MODELS (唯一在此定义) ---
+// --- 🚫 全局唯一数据模型 ---
 data class HealthLog(val timeLabel: String, val type: String, val desc: String, val value: String)
 data class MoodLog(val timeLabel: String, val label: String, val value: String, val numericScore: Float)
 data class DietEntry(val time: String, val food: String, val carbs: String, val numericValue: Float)
 data class ExerciseEntry(val time: String, val activity: String, val duration: String, val numericValue: Float)
 data class HeartRateEntry(val time: String, val bpm: Int, val status: String)
 
-// 🩸 完美对齐的 5 项原始数据结构
 data class CgmNode(
-    val timeLabel: String,             // 1. 时间戳
-    val value: Double,                 // 2. 血糖值
-    val trend: String,                 // 3. 趋势箭头
-    val samplingInterval: String,      // 4. 采样时间间隔
-    val rateOfChange: String           // 5. 变化速率
+    val timeLabel: String,
+    val value: Double,
+    val trend: String = "→",
+    val samplingInterval: String,
+    val rateOfChange: String
 )
 
 data class ClinicalCgmReport(
@@ -188,7 +216,6 @@ class ReportViewModel : ViewModel() {
     var userProfile = mutableStateOf(UserProfile("28 岁", "女", "175 cm", "70 kg", "2023 年 5 月", "是", "6.2 %"))
 
     init {
-        // Mock数据完整填充 5 维度
         cgmNodes.addAll(listOf(
             CgmNode("08:00", 5.4, "→", "3min", "0.0"),
             CgmNode("12:00", 6.1, "↗", "3min", "+0.1"),
@@ -200,51 +227,69 @@ class ReportViewModel : ViewModel() {
         hrLogs.addAll(listOf(HeartRateEntry("08:00", 72, "静息"), HeartRateEntry("19:00", 110, "运动")))
     }
 
-    // 🚀 Chatbot 提取全量数据
+    // 🚀 并行智能提取引擎：彻底解决“词汇冲突”与“漏记”
     fun processChatInput(input: String) {
         val time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-        val numbers = Regex("(\\d+\\.\\d+|\\d+)").findAll(input).map { it.value.toFloat() }.toList()
-        val firstNum = numbers.firstOrNull()
+        var matchedSomething = false
+        val extractedNumber = Regex("(\\d+\\.\\d+|\\d+)").find(input)?.value?.toFloatOrNull()
 
-        when {
-            input.contains("血糖") || input.contains("低血糖") || input.contains("测了") -> {
-                val bg = firstNum ?: 5.5f
-                val trend = if (input.contains("上") || input.contains("升") || input.contains("高")) "↑"
-                else if (input.contains("下") || input.contains("降") || input.contains("低")) "↓" else "→"
+        // 1. CGM 解析
+        if (Regex("血糖|低血糖|高血糖|测了").containsMatchIn(input)) {
+            val bg = extractedNumber ?: 5.5f
+            val trend = if (Regex("上|升|高|↑").containsMatchIn(input)) "↑" else if (Regex("下|降|低|↓").containsMatchIn(input)) "↓" else "→"
+            val rateMatch = Regex("(速率|变化)[^\\d+-]*([+-]?\\d+\\.\\d+|[+-]?\\d+)").find(input)
+            val rateVal = rateMatch?.groupValues?.get(2) ?: "0.0"
+            val rateSign = if (trend == "↓" && !rateVal.startsWith("-")) "-" else if (trend == "↑" && !rateVal.startsWith("+") && rateVal != "0.0") "+" else ""
+            val finalRate = if (rateVal == "0.0") "0.0" else if(rateVal.startsWith("+") || rateVal.startsWith("-")) rateVal else "$rateSign$rateVal"
+            cgmNodes.add(CgmNode(time, bg.toDouble(), trend, "3min", finalRate))
+            matchedSomething = true
+        }
 
-                val rateMatch = Regex("(速率|变化).*?([0-9.]+)").find(input)
-                val rateVal = rateMatch?.groupValues?.get(2) ?: "0.0"
-                val rateSign = if (trend == "↓") "-" else if (trend == "↑") "+" else ""
-                val finalRate = if (rateVal == "0.0") "0.0" else "$rateSign$rateVal"
+        // 2. 胰岛素解析
+        if (Regex("胰岛素|打针|单位|U").containsMatchIn(input)) {
+            val units = extractedNumber ?: 2f
+            dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units))
+            matchedSomething = true
+        }
 
-                // 机器人自动填充时间戳和默认采样率
-                cgmNodes.add(CgmNode(time, bg.toDouble(), trend, "3min", finalRate))
+        // 3. 饮食解析
+        if (Regex("吃|餐|饭|饮食|碳水").containsMatchIn(input)) {
+            val carbs = extractedNumber ?: 40f
+            dietLogs.add(0, DietEntry(time, input, "约 ${carbs}g", carbs))
+            matchedSomething = true
+        }
+
+        // 4. 运动解析
+        if (Regex("跑|步|运动|锻炼|健身|游泳|骑车").containsMatchIn(input)) {
+            val duration = extractedNumber ?: 30f
+            exerciseLogs.add(0, ExerciseEntry(time, input, "${duration}min", duration))
+            matchedSomething = true
+        }
+
+        // 5. 心率解析 (🔥已修复：严格匹配心率，不再被“心情”触发)
+        if (Regex("心率|心跳|bpm|BPM").containsMatchIn(input)) {
+            val bpm = extractedNumber?.toInt() ?: 85
+            hrLogs.add(0, HeartRateEntry(time, bpm, "自动识别"))
+            matchedSomething = true
+        }
+
+        // 6. 情绪解析 (🔥独立解析：如果包含情绪词或啥都没匹配到，自动打分绘图)
+        val moodKeywords = Regex("心情|情绪|感觉|状态|开心|高兴|爽|好|难过|生气|郁闷|压力|累|烦|平稳|平静|差|低落")
+        if (moodKeywords.containsMatchIn(input) || !matchedSomething) {
+            val score = when {
+                Regex("极佳|特别好|开心|高兴|爽").containsMatchIn(input) -> 8.5f
+                Regex("难过|生气|郁闷|烦|差|压力|累|低落|糟").containsMatchIn(input) -> 3.5f
+                Regex("平稳|平静|还行|不错|好").containsMatchIn(input) -> 7.0f
+                else -> 6.5f
             }
-            input.contains("胰岛素") || input.contains("打针") -> {
-                val units = firstNum ?: 2f
-                dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units))
-            }
-            input.contains("吃") || input.contains("餐") || input.contains("碳水") -> {
-                val carbs = firstNum ?: 40f
-                dietLogs.add(0, DietEntry(time, input, "约 ${carbs}g", carbs))
-            }
-            input.contains("跑") || input.contains("步") || input.contains("动") -> {
-                val duration = firstNum ?: 30f
-                exerciseLogs.add(0, ExerciseEntry(time, input, "${duration}min", duration))
-            }
-            input.contains("心") || input.contains("跳") -> {
-                val bpm = firstNum?.toInt() ?: 85
-                hrLogs.add(0, HeartRateEntry(time, bpm, "自动识别"))
-            }
-            else -> moodNodes.add(0, MoodLog(time, "日常", input, 7.8f))
+            // 加在末尾以保证在表情曲线上从左往右绘制
+            moodNodes.add(MoodLog(time, "状态记录", input, score))
         }
     }
 
     fun addDiet(f: String, c: String) { val cv = c.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; dietLogs.add(0, DietEntry("手动", f, "${cv}g", cv)) }
     fun addExercise(a: String, d: String) { val dv = d.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; exerciseLogs.add(0, ExerciseEntry("手动", a, "${dv}min", dv)) }
     fun addHeartRate(b: Int, s: String) { hrLogs.add(0, HeartRateEntry("手动", b, s)) }
-
-    // 🆕 全量接收弹窗传来的 5 个维度数据！
     fun addCgmNode(bg: Double, time: String, interval: String, trend: String, rate: String) {
         val finalTime = time.ifBlank { java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) }
         val finalInterval = interval.ifBlank { "3min" }

@@ -1,4 +1,5 @@
 //
+//
 //package com.withapp.with.ui.screens
 //
 //import androidx.compose.foundation.background
@@ -71,7 +72,7 @@
 //@Composable
 //fun HomeChatCombinedView(reportViewModel: ReportViewModel) {
 //    var inputText by remember { mutableStateOf(TextFieldValue("")) }
-//    val chatMessages = remember { mutableStateListOf(ChatMessage("嗨！我是 With。直接对我说『血糖 5.8，趋势向下，速率0.1』，我会为你自动同步所有的底层参数！", false)) }
+//    val chatMessages = remember { mutableStateListOf(ChatMessage("嗨！我是 With。我现在能听懂复杂句子了！试试说：『吃了 40g 碳水，测了下血糖 7.2，心情很好』", false)) }
 //
 //    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA))) {
 //        Column(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -86,7 +87,7 @@
 //                OutlinedTextField(
 //                    value = inputText,
 //                    onValueChange = { inputText = it },
-//                    placeholder = { Text("输入血糖、饮食、运动或情绪...") },
+//                    placeholder = { Text("输入血糖、饮食、运动或多项记录...") },
 //                    modifier = Modifier.weight(1f),
 //                    shape = RoundedCornerShape(24.dp)
 //                )
@@ -94,8 +95,8 @@
 //                    val text = inputText.text
 //                    if (text.isNotBlank()) {
 //                        chatMessages.add(ChatMessage(text, true))
-//                        reportViewModel.processChatInput(text) // ✨ AI同步引擎
-//                        chatMessages.add(ChatMessage("✅ 已识别！核心数据、走势箭头和速率已全部记录进你的个人报告中。", false))
+//                        reportViewModel.processChatInput(text) // ✨ 并行同步引擎
+//                        chatMessages.add(ChatMessage("✅ 已多维解析！所有提及的数据点均已分类归档到最新图表。", false))
 //                        inputText = TextFieldValue("")
 //                    }
 //                }) { Icon(Icons.AutoMirrored.Filled.Send, null, tint = Color(0xFF008080)) }
@@ -149,6 +150,7 @@
 //        }
 //    }
 //}
+
 package com.withapp.with.ui.screens
 
 import androidx.compose.foundation.background
@@ -221,7 +223,7 @@ fun MainContainer(onRequestPermission: () -> Unit = {}) {
 @Composable
 fun HomeChatCombinedView(reportViewModel: ReportViewModel) {
     var inputText by remember { mutableStateOf(TextFieldValue("")) }
-    val chatMessages = remember { mutableStateListOf(ChatMessage("嗨！我是 With。直接对我说『血糖 5.8，趋势上升，速率0.1』，我会自动同步所有的底层参数！", false)) }
+    val chatMessages = remember { mutableStateListOf(ChatMessage("嗨！试试一次发多条：『跑了 30 分钟，测了血糖 6.2，心情很不错』，我会智能拆解到各个图表中！", false)) }
 
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA))) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -236,7 +238,7 @@ fun HomeChatCombinedView(reportViewModel: ReportViewModel) {
                 OutlinedTextField(
                     value = inputText,
                     onValueChange = { inputText = it },
-                    placeholder = { Text("输入血糖、饮食、运动或情绪...") },
+                    placeholder = { Text("记录生活与健康...") },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(24.dp)
                 )
@@ -245,7 +247,7 @@ fun HomeChatCombinedView(reportViewModel: ReportViewModel) {
                     if (text.isNotBlank()) {
                         chatMessages.add(ChatMessage(text, true))
                         reportViewModel.processChatInput(text)
-                        chatMessages.add(ChatMessage("✅ 已识别！数据已自动同步且重绘了最新图表。", false))
+                        chatMessages.add(ChatMessage("✅ 已精准拆解记录！数据未出现记串，已分发至各项报表。", false))
                         inputText = TextFieldValue("")
                     }
                 }) { Icon(Icons.AutoMirrored.Filled.Send, null, tint = Color(0xFF008080)) }

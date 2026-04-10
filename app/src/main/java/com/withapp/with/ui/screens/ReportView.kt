@@ -1,4 +1,5 @@
-//
+
+
 //package com.withapp.with.ui.screens
 //
 //import androidx.compose.foundation.*
@@ -37,7 +38,7 @@
 //    var showDietDialog by remember { mutableStateOf(false) }
 //    var showExerciseDialog by remember { mutableStateOf(false) }
 //    var showHrDialog by remember { mutableStateOf(false) }
-//    var showCgmDialog by remember { mutableStateOf(false) } // 血糖手动弹窗
+//    var showCgmDialog by remember { mutableStateOf(false) }
 //
 //    Scaffold(
 //        topBar = { TopAppBar(title = { Text("高精度全量数据报告", fontWeight = FontWeight.Bold) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }) }
@@ -46,7 +47,7 @@
 //
 //            TimeScaleSelector(selectedScale = currentScale, onScaleSelect = { reportViewModel.currentScale.value = it })
 //
-//            // 🩸 SECTION 1: 全体系 CGM 包含全新原始数据！
+//            // 🩸 SECTION 1: 全体系 CGM
 //            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
 //                Text("📊 CGM 核心数据总览 (${currentScale})", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF008080))
 //                IconButton(onClick = { showCgmDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFF008080).copy(0.1f), CircleShape)) { Icon(Icons.Default.Add, null, tint = Color(0xFF008080), modifier = Modifier.size(18.dp)) }
@@ -57,7 +58,7 @@
 //            Text("🧠 核心情绪指标与量表 (${currentScale})", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFFFFB74D))
 //            ClinicalMoodCard(moodRep, moodNodes)
 //
-//            // 🛡️ SECTION 3: 实时同步历史图表
+//            // 🛡️ SECTION 3: 实时图表走势
 //            Text("🛡️ 行为/上下文数据走势", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF5C6BC0))
 //            HealthListCard("🍏 饮食与胰岛素 (行为数据)", Color(0xFF81C784), reportViewModel.dietLogs.toList(), { showDietDialog = true }, { it.numericValue }, { "${it.time} - ${it.food} (${it.carbs})" })
 //            HealthListCard("🏃 运动与睡眠 (影响因子)", Color(0xFF4FC3F7), reportViewModel.exerciseLogs.toList(), { showExerciseDialog = true }, { it.numericValue }, { "${it.time} - ${it.activity} (${it.duration})" })
@@ -66,19 +67,34 @@
 //            Spacer(Modifier.height(40.dp))
 //        }
 //
-//        // 🚀 终极手动弹窗 (支持 CGM 所有维度的录入)
+//        // 🚀 完整 5 个维度的输入框弹窗
 //        if (showCgmDialog) {
-//            var v1 by remember { mutableStateOf("") }; var v2 by remember { mutableStateOf("") }; var v3 by remember { mutableStateOf("") }
-//            AlertDialog(onDismissRequest = { showCgmDialog = false }, title = { Text("添加实时CGM原始数据") },
-//                text = { Column {
-//                    OutlinedTextField(v1, {v1=it}, label={Text("血糖值 (mmol/L)")}); Spacer(Modifier.height(8.dp))
-//                    OutlinedTextField(v2, {v2=it}, label={Text("趋势 (↑, →, ↓)")}); Spacer(Modifier.height(8.dp))
-//                    OutlinedTextField(v3, {v3=it}, label={Text("变化速率 (mmol/L/min)")})
-//                } },
-//                confirmButton = { Button(onClick = { reportViewModel.addCgmNode(v1.toDoubleOrNull() ?: 5.5, v2.ifBlank { "→" }, v3.ifBlank { "0.0" }); showCgmDialog = false }) { Text("添加") } }
+//            var v1 by remember { mutableStateOf("") }
+//            var v2 by remember { mutableStateOf("") }
+//            var v3 by remember { mutableStateOf("") }
+//            var v4 by remember { mutableStateOf("") }
+//            var v5 by remember { mutableStateOf("") }
+//
+//            AlertDialog(onDismissRequest = { showCgmDialog = false },
+//                title = { Text("添加实时CGM原始数据", fontWeight = FontWeight.Bold) },
+//                text = {
+//                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+//                        OutlinedTextField(v1, {v1=it}, label={Text("当前血糖值 (Glucose)")}, modifier = Modifier.fillMaxWidth())
+//                        OutlinedTextField(v2, {v2=it}, label={Text("时间戳 (Timestamp)")}, modifier = Modifier.fillMaxWidth())
+//                        OutlinedTextField(v3, {v3=it}, label={Text("采样时间间隔 (Interval)")}, modifier = Modifier.fillMaxWidth())
+//                        OutlinedTextField(v4, {v4=it}, label={Text("趋势箭头 (Trend)")}, modifier = Modifier.fillMaxWidth())
+//                        OutlinedTextField(v5, {v5=it}, label={Text("血糖变化速率 (Rate)")}, modifier = Modifier.fillMaxWidth())
+//                    }
+//                },
+//                confirmButton = {
+//                    Button(onClick = {
+//                        reportViewModel.addCgmNode(v1.toDoubleOrNull() ?: 5.5, v2, v3, v4.ifBlank { "→" }, v5.ifBlank { "0.0" })
+//                        showCgmDialog = false
+//                    }) { Text("添加") }
+//                }
 //            )
 //        }
-//        if (showDietDialog) InputDialog("添加上下文数据", "项目(如: 餐食/胰岛素)", "数值") { v1, v2 -> reportViewModel.addDiet(v1, v2); showDietDialog = false }
+//        if (showDietDialog) InputDialog("添加上下文数据", "项目(如: 餐食)", "数值") { v1, v2 -> reportViewModel.addDiet(v1, v2); showDietDialog = false }
 //        if (showExerciseDialog) InputDialog("添加运动", "项目", "时长(min)") { v1, v2 -> reportViewModel.addExercise(v1, v2); showExerciseDialog = false }
 //        if (showHrDialog) InputDialog("添加心率", "BPM", "状态") { v1, v2 -> reportViewModel.addHeartRate(v1.toIntOrNull() ?: 75, v2); showHrDialog = false }
 //    }
@@ -89,26 +105,24 @@
 //    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
 //        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
 //
-//            // 🟢 专属展示：实时与原始数据 (Screenshot 22:22:03 对标)
 //            val latest = nodes.lastOrNull()
 //            if (latest != null) {
 //                Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp)).padding(12.dp)) {
 //                    Text("🟢 实时与原始数据 (Raw Data)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF2E7D32))
-//                    Spacer(Modifier.height(8.dp))
+//                    Spacer(Modifier.height(10.dp))
 //                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
 //                        MetricItem("当前血糖值", "${latest.value} mmol/L")
 //                        MetricItem("时间戳", latest.timeLabel)
-//                        MetricItem("趋势箭头", latest.trend)
+//                        MetricItem("采样间隔", latest.samplingInterval)
 //                    }
-//                    Spacer(Modifier.height(8.dp))
+//                    Spacer(Modifier.height(10.dp))
 //                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-//                        MetricItem("采样时间间隔", latest.samplingInterval)
+//                        MetricItem("趋势箭头", latest.trend)
 //                        MetricItem("血糖变化速率", "${latest.rateOfChange} mmol/L/min")
 //                    }
 //                }
 //            }
 //
-//            // 下方是保留的原始 7 项数据，绝无删减！
 //            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
 //                Column { Text("设备状态", fontSize = 10.sp, color = Color.Gray); Text(report.deviceInfo, fontSize = 12.sp) }
 //                Column(horizontalAlignment = Alignment.End) { Text("完整率", fontSize = 10.sp, color = Color.Gray); Text(report.completeness, fontSize = 12.sp, color = Color(0xFF008080)) }
@@ -145,12 +159,10 @@
 //                    drawPath(path, Color(0xFF008080), style = Stroke(4f))
 //                }
 //            }
-//            Text("⚠️ 事件与警报: 低血糖 ${report.hypoEvents} 次 | 警报 ${report.alertsTriggered} 次", fontSize = 11.sp, color = Color(0xFFE57373))
 //        }
 //    }
 //}
 //
-//// ---- 下面是保留的无损情绪卡片与动态图表列表 ----
 //@Composable
 //fun ClinicalMoodCard(report: ClinicalMoodReport, nodes: List<MoodLog>) {
 //    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -224,13 +236,13 @@
 //
 //@Composable
 //fun MetricItem(label: String, value: String) {
-//    Column { Text(label, fontSize = 10.sp, color = Color.Gray); Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080)) }
+//    Column { Text(label, fontSize = 10.sp, color = Color.Gray); Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080)) }
 //}
 //
 //@Composable
 //fun InputDialog(title: String, l1: String, l2: String, onConfirm: (String, String) -> Unit) {
 //    var t1 by remember { mutableStateOf("") }; var t2 by remember { mutableStateOf("") }
-//    AlertDialog(onDismissRequest = {}, title = { Text(title) }, text = { Column { OutlinedTextField(t1, {t1=it}, label={Text(l1)}); Spacer(Modifier.height(8.dp)); OutlinedTextField(t2, {t2=it}, label={Text(l2)}) } },
+//    AlertDialog(onDismissRequest = {}, title = { Text(title) }, text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { OutlinedTextField(t1, {t1=it}, label={Text(l1)}, modifier = Modifier.fillMaxWidth()); OutlinedTextField(t2, {t2=it}, label={Text(l2)}, modifier = Modifier.fillMaxWidth()) } },
 //        confirmButton = { Button(onClick = {onConfirm(t1,t2)}) { Text("添加") } }
 //    )
 //}
@@ -249,6 +261,7 @@
 //        }
 //    }
 //}
+
 package com.withapp.with.ui.screens
 
 import androidx.compose.foundation.*
@@ -303,49 +316,26 @@ fun ReportView(reportViewModel: ReportViewModel, onBack: () -> Unit = {}) {
             }
             ClinicalCgmCard(cgmRep, cgmNodes)
 
-            // 🧠 SECTION 2: 情绪指标
-            Text("🧠 核心情绪指标与量表 (${currentScale})", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFFFFB74D))
+            // 🧠 SECTION 2: 情绪指标 (🔥 新增历史滚动记录)
+            Text("🧠 核心情绪指标与记录 (${currentScale})", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFFFFB74D))
             ClinicalMoodCard(moodRep, moodNodes)
 
-            // 🛡️ SECTION 3: 实时同步历史图表
+            // 🛡️ SECTION 3: 实时图表走势
             Text("🛡️ 行为/上下文数据走势", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF5C6BC0))
-            HealthListCard("🍏 饮食与胰岛素 (行为数据)", Color(0xFF81C784), reportViewModel.dietLogs.toList(), { showDietDialog = true }, { it.numericValue }, { "${it.time} - ${it.food} (${it.carbs})" })
-            HealthListCard("🏃 运动与睡眠 (影响因子)", Color(0xFF4FC3F7), reportViewModel.exerciseLogs.toList(), { showExerciseDialog = true }, { it.numericValue }, { "${it.time} - ${it.activity} (${it.duration})" })
+            HealthListCard("🍏 饮食与胰岛素", Color(0xFF81C784), reportViewModel.dietLogs.toList(), { showDietDialog = true }, { it.numericValue }, { "${it.time} - ${it.food} (${it.carbs})" })
+            HealthListCard("🏃 运动与睡眠", Color(0xFF4FC3F7), reportViewModel.exerciseLogs.toList(), { showExerciseDialog = true }, { it.numericValue }, { "${it.time} - ${it.activity} (${it.duration})" })
             HealthListCard("💓 心率 (BPM)", Color(0xFFE57373), reportViewModel.hrLogs.toList(), { showHrDialog = true }, { it.bpm.toFloat() }, { "${it.time} - BPM: ${it.bpm} (${it.status})" })
 
             Spacer(Modifier.height(40.dp))
         }
 
-        // 🚀 终极修复：完美提供 5 个输入框的弹窗
+        // 弹窗
         if (showCgmDialog) {
-            var v1 by remember { mutableStateOf("") } // 血糖
-            var v2 by remember { mutableStateOf("") } // 时间戳
-            var v3 by remember { mutableStateOf("") } // 采样间隔
-            var v4 by remember { mutableStateOf("") } // 趋势
-            var v5 by remember { mutableStateOf("") } // 变化速率
-
+            var v1 by remember { mutableStateOf("") }; var v2 by remember { mutableStateOf("") }; var v3 by remember { mutableStateOf("") }; var v4 by remember { mutableStateOf("") }; var v5 by remember { mutableStateOf("") }
             AlertDialog(onDismissRequest = { showCgmDialog = false },
                 title = { Text("添加实时CGM原始数据", fontWeight = FontWeight.Bold) },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(v1, {v1=it}, label={Text("当前血糖值 (Glucose)")}, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(v2, {v2=it}, label={Text("时间戳 (Timestamp)")}, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(v3, {v3=it}, label={Text("采样时间间隔 (Interval)")}, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(v4, {v4=it}, label={Text("趋势箭头 (Trend)")}, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(v5, {v5=it}, label={Text("血糖变化速率 (Rate)")}, modifier = Modifier.fillMaxWidth())
-                    }
-                },
-                confirmButton = {
-                    Button(onClick = {
-                        reportViewModel.addCgmNode(
-                            v1.toDoubleOrNull() ?: 5.5,
-                            v2, v3,
-                            v4.ifBlank { "→" },
-                            v5.ifBlank { "0.0" }
-                        )
-                        showCgmDialog = false
-                    }) { Text("添加") }
-                }
+                text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(v1, {v1=it}, label={Text("当前血糖值 (Glucose)")}, modifier = Modifier.fillMaxWidth()); OutlinedTextField(v2, {v2=it}, label={Text("时间戳 (Timestamp)")}, modifier = Modifier.fillMaxWidth()); OutlinedTextField(v3, {v3=it}, label={Text("采样时间间隔 (Interval)")}, modifier = Modifier.fillMaxWidth()); OutlinedTextField(v4, {v4=it}, label={Text("趋势箭头 (Trend)")}, modifier = Modifier.fillMaxWidth()); OutlinedTextField(v5, {v5=it}, label={Text("血糖变化速率 (Rate)")}, modifier = Modifier.fillMaxWidth()) } },
+                confirmButton = { Button(onClick = { reportViewModel.addCgmNode(v1.toDoubleOrNull() ?: 5.5, v2, v3, v4.ifBlank { "→" }, v5.ifBlank { "0.0" }); showCgmDialog = false }) { Text("添加") } }
             )
         }
         if (showDietDialog) InputDialog("添加上下文数据", "项目", "数值") { v1, v2 -> reportViewModel.addDiet(v1, v2); showDietDialog = false }
@@ -358,7 +348,6 @@ fun ReportView(reportViewModel: ReportViewModel, onBack: () -> Unit = {}) {
 fun ClinicalCgmCard(report: ClinicalCgmReport, nodes: List<CgmNode>) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-
             val latest = nodes.lastOrNull()
             if (latest != null) {
                 Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp)).padding(12.dp)) {
@@ -376,7 +365,6 @@ fun ClinicalCgmCard(report: ClinicalCgmReport, nodes: List<CgmNode>) {
                     }
                 }
             }
-
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column { Text("设备状态", fontSize = 10.sp, color = Color.Gray); Text(report.deviceInfo, fontSize = 12.sp) }
                 Column(horizontalAlignment = Alignment.End) { Text("完整率", fontSize = 10.sp, color = Color.Gray); Text(report.completeness, fontSize = 12.sp, color = Color(0xFF008080)) }
@@ -413,11 +401,11 @@ fun ClinicalCgmCard(report: ClinicalCgmReport, nodes: List<CgmNode>) {
                     drawPath(path, Color(0xFF008080), style = Stroke(4f))
                 }
             }
-            Text("⚠️ 事件与警报: 低血糖 ${report.hypoEvents} 次 | 警报 ${report.alertsTriggered} 次", fontSize = 11.sp, color = Color(0xFFE57373))
         }
     }
 }
 
+// 🔥 核心更新：给情绪卡片加入了【滑动历史记录】！并且表情曲线照常实时重绘！
 @Composable
 fun ClinicalMoodCard(report: ClinicalMoodReport, nodes: List<MoodLog>) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -436,6 +424,7 @@ fun ClinicalMoodCard(report: ClinicalMoodReport, nodes: List<MoodLog>) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("PHQ-9: ${report.phq9Score}", fontSize = 11.sp); Text("GAD-7: ${report.gad7Score}", fontSize = 11.sp); Text("PSS: ${report.pssScore}", fontSize = 11.sp)
             }
+            // 情绪表情曲线
             Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                 Canvas(modifier = Modifier.width(800.dp).height(140.dp)) {
                     val ep = android.graphics.Paint().apply { textSize = 40f }
@@ -448,6 +437,16 @@ fun ClinicalMoodCard(report: ClinicalMoodReport, nodes: List<MoodLog>) {
                         drawCircle(Color(0xFF90CAF9), 10f, Offset(x, y))
                     }
                     drawPath(p, Color(0xFF7986CB), style = Stroke(6f))
+                }
+            }
+
+            // 🆕 情绪卡片专属的滑动历史记录
+            Spacer(Modifier.height(8.dp))
+            Text("情绪追踪历史 (${nodes.size} 条)", fontSize = 12.sp, color = Color.Gray)
+            Column(modifier = Modifier.fillMaxWidth().heightIn(max = 140.dp).verticalScroll(rememberScrollState())) {
+                nodes.reversed().forEach { item ->
+                    Text("${item.timeLabel} | ${item.label} : ${item.value}", fontSize = 13.sp, color = Color.DarkGray, modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(color = Color(0xFFF1F1F1))
                 }
             }
         }
