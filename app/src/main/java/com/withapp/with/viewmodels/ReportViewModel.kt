@@ -11,7 +11,6 @@
 //data class DietEntry(val time: String, val food: String, val carbs: String, val numericValue: Float)
 //data class ExerciseEntry(val time: String, val activity: String, val duration: String, val numericValue: Float)
 //data class HeartRateEntry(val time: String, val bpm: Int, val status: String)
-//
 //data class CgmNode(val timeLabel: String, val value: Double, val trend: String = "→", val samplingInterval: String, val rateOfChange: String)
 //
 //data class ClinicalCgmReport(
@@ -31,7 +30,7 @@
 //    var age: String, var gender: String, var height: String, var weight: String,
 //    var diagnosisDate: String, var insulinUse: String, var medication: String,
 //    var targetRange: String, var hba1c: String, var reminderTime: String, var reminderFrequency: String,
-//    var isPrivacyMode: Boolean = false
+//    var isPrivacyMode: Boolean = false, var isContextAwareAlerts: Boolean = true
 //)
 //
 //class ReportViewModel : ViewModel() {
@@ -43,15 +42,18 @@
 //    val cgmNodes = mutableStateListOf<CgmNode>()
 //    val moodNodes = mutableStateListOf<MoodLog>()
 //
+//    // 🆕 V12：追踪最后一次操作，用于实现 Undo 算法撤销
+//    private var lastActionType = ""
+//
 //    var cgmReport = mutableStateOf(ClinicalCgmReport(
-//        deviceInfo = "With v6 (Final) | 3min/次", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
+//        deviceInfo = "With v12 (Masterpiece) | 3min/次", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
 //        sd = "1.2", cv = "18.7% (<36%)", mage = "2.1", gmi = "6.1%", tirTarget = 92, tirHigh = 5, tirLow = 3,
 //        tbrLevel1 = "2%", tbrLevel2 = "1% (<3.0)", tarLevel1 = "4%", tarLevel2 = "1% (>13.9)",
 //        wearTime = "98%", completeness = "99.5%", signalLoss = "15 min", hypoEvents = 1, hyperEvents = 2, alertsTriggered = 3,
 //        clinicalAdvice = "今日血糖极佳，TIR 达标。趋势平稳，无需调整。"
 //    ))
 //    var moodReport = mutableStateOf(ClinicalMoodReport("7.5", "7.8", "0.9", "Low", 70, 20, 10, "2 (极轻)", "3 (极轻)", "12 (轻度)"))
-//    var userProfile = mutableStateOf(UserProfile("28 岁", "女", "175 cm", "70 kg", "2023/05", "是", "二甲双胍", "3.9 - 10.0", "6.2 %", "餐后30分", "每天3次", false))
+//    var userProfile = mutableStateOf(UserProfile("28 岁", "女", "175 cm", "70 kg", "2023/05", "是", "二甲双胍", "3.9 - 10.0", "6.2 %", "餐后30分", "每天3次", false, true))
 //
 //    init {
 //        cgmNodes.addAll(listOf(
@@ -85,23 +87,29 @@
 //        val time = timeMatch ?: java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
 //        val inputCleaned = if (timeMatch != null) input.replace(timeMatch, "") else input
 //        val extractedNumber = Regex("(\\d+\\.\\d+|\\d+)").find(inputCleaned)?.value?.toFloatOrNull()
+//
+//        // 🆕 V12：意图消歧 (Conversational Disambiguation) - 彻底解决 P1 “输入身高不给反馈” 的核心痛点！
+//        if (Regex("身高|多高").containsMatchIn(inputCleaned)) {
+//            val h = extractedNumber?.toInt() ?: 175
+//            userProfile.value = userProfile.value.copy(height = "$h cm")
+//            lastActionType = "profile"
+//            return "✅ 已识别为个人档案信息！您的身高已自动更新为 $h cm，您可在『档案』页查看。"
+//        }
+//        if (Regex("体重|多重").containsMatchIn(inputCleaned)) {
+//            val w = extractedNumber?.toInt() ?: 70
+//            userProfile.value = userProfile.value.copy(weight = "$w kg")
+//            lastActionType = "profile"
+//            return "✅ 已识别为个人档案信息！您的体重已自动更新为 $w kg，您可在『档案』页查看。"
+//        }
+//
 //        var matchedSomething = false
 //
-//        if (Regex("血糖|低血糖|高血糖|测了|mmol").containsMatchIn(inputCleaned)) {
-//            addCgmNode(extractedNumber?.toDouble() ?: 5.5, time); matchedSomething = true
-//        }
-//        if (Regex("胰岛素|打针|单位|U").containsMatchIn(inputCleaned)) {
-//            val units = extractedNumber ?: 2f; dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units)); matchedSomething = true
-//        }
-//        if (Regex("吃|餐|饭|饮食|碳水").containsMatchIn(inputCleaned)) {
-//            val carbs = extractedNumber ?: 40f; dietLogs.add(0, DietEntry(time, inputCleaned, "约 ${carbs}g", carbs)); matchedSomething = true
-//        }
-//        if (Regex("跑|步|运动|锻炼|健身|游泳|骑车").containsMatchIn(inputCleaned)) {
-//            val duration = extractedNumber ?: 30f; exerciseLogs.add(0, ExerciseEntry(time, inputCleaned, "${duration}min", duration)); matchedSomething = true
-//        }
-//        if (Regex("心率|心跳|bpm|BPM").containsMatchIn(inputCleaned)) {
-//            hrLogs.add(0, HeartRateEntry(time, extractedNumber?.toInt() ?: 85, "自动识别")); matchedSomething = true
-//        }
+//        if (Regex("血糖|低血糖|高血糖|测了|mmol").containsMatchIn(inputCleaned)) { addCgmNode(extractedNumber?.toDouble() ?: 5.5, time); lastActionType = "cgm"; matchedSomething = true }
+//        else if (Regex("胰岛素|打针|单位|U").containsMatchIn(inputCleaned)) { val units = extractedNumber ?: 2f; dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units)); lastActionType = "diet"; matchedSomething = true }
+//        else if (Regex("吃|餐|饭|饮食|碳水").containsMatchIn(inputCleaned)) { val carbs = extractedNumber ?: 40f; dietLogs.add(0, DietEntry(time, inputCleaned, "约 ${carbs}g", carbs)); lastActionType = "diet"; matchedSomething = true }
+//        else if (Regex("跑|步|运动|锻炼|健身|游泳|骑车").containsMatchIn(inputCleaned)) { val duration = extractedNumber ?: 30f; exerciseLogs.add(0, ExerciseEntry(time, inputCleaned, "${duration}min", duration)); lastActionType = "exercise"; matchedSomething = true }
+//        else if (Regex("心率|心跳|bpm|BPM").containsMatchIn(inputCleaned)) { hrLogs.add(0, HeartRateEntry(time, extractedNumber?.toInt() ?: 85, "自动识别")); lastActionType = "hr"; matchedSomething = true }
+//
 //        val moodKeywords = Regex("心情|情绪|感觉|状态|开心|高兴|爽|好|难过|生气|郁闷|压力|累|烦|平稳|平静|差|低落")
 //        if (moodKeywords.containsMatchIn(inputCleaned) || !matchedSomething) {
 //            val score = when {
@@ -110,15 +118,29 @@
 //                Regex("平稳|平静|还行|不错|好").containsMatchIn(inputCleaned) -> 7.0f
 //                else -> extractedNumber ?: 6.5f
 //            }
-//            addMoodNode(score, if (score >= 8f) "极佳" else if (score <= 4f) "低落" else "平稳", time)
+//            val customLabel = if (inputCleaned.length > 8) inputCleaned.substring(0, 8) + "..." else inputCleaned
+//            addMoodNode(score, if (score >= 8f) "极佳: $customLabel" else if (score <= 4f) "低落: $customLabel" else "平稳: $customLabel", time)
+//            lastActionType = "mood"
 //        }
-//        return "✅ 已精准提取并存入数据库！可在『回顾』中查看。"
+//        return "🎉 记录成功！干得漂亮，每一次记录都是在为健康投资。数据已整理至『回顾』中。"
+//    }
+//
+//    // 🆕 V12：赋予用户撤销权 (Algorithmic Reversibility)
+//    fun undoLastAction(): String {
+//        when (lastActionType) {
+//            "cgm" -> if (cgmNodes.isNotEmpty()) cgmNodes.removeAt(cgmNodes.size - 1)
+//            "mood" -> if (moodNodes.isNotEmpty()) moodNodes.removeAt(moodNodes.size - 1)
+//            "diet" -> if (dietLogs.isNotEmpty()) dietLogs.removeAt(0)
+//            "exercise" -> if (exerciseLogs.isNotEmpty()) exerciseLogs.removeAt(0)
+//            "hr" -> if (hrLogs.isNotEmpty()) hrLogs.removeAt(0)
+//            else -> return "没有可以撤销的操作。"
+//        }
+//        lastActionType = "" // 撤销后清空状态
+//        return "↩️ 已成功撤销上一次的智能提取记录。"
 //    }
 //
 //    fun addCgmNode(bg: Double, timeInput: String) { cgmNodes.add(CgmNode(timeInput.ifBlank { java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) }, bg, "↗", "3min", "+0.00")) }
 //    fun addMoodNode(score: Float, label: String, timeInput: String) { moodNodes.add(MoodLog(timeInput.ifBlank { java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) }, label, "手动记录", score)) }
-//    fun addDiet(f: String, c: String) { val cv = c.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; dietLogs.add(0, DietEntry(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")), f, "${cv}g", cv)) }
-//    fun addExercise(a: String, d: String) { val dv = d.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; exerciseLogs.add(0, ExerciseEntry(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")), a, "${dv}min", dv)) }
 //}
 
 package com.withapp.with.viewmodels
@@ -132,7 +154,6 @@ data class MoodLog(val timeLabel: String, val label: String, val value: String, 
 data class DietEntry(val time: String, val food: String, val carbs: String, val numericValue: Float)
 data class ExerciseEntry(val time: String, val activity: String, val duration: String, val numericValue: Float)
 data class HeartRateEntry(val time: String, val bpm: Int, val status: String)
-
 data class CgmNode(val timeLabel: String, val value: Double, val trend: String = "→", val samplingInterval: String, val rateOfChange: String)
 
 data class ClinicalCgmReport(
@@ -148,13 +169,12 @@ data class ClinicalMoodReport(
     val positiveAffect: Int, val neutralAffect: Int, val negativeAffect: Int, val phq9Score: String, val gad7Score: String, val pssScore: String
 )
 
-// 🆕 V7终极修改：加入 isContextAwareAlerts (JITAI理论) 字段
 data class UserProfile(
     var age: String, var gender: String, var height: String, var weight: String,
     var diagnosisDate: String, var insulinUse: String, var medication: String,
     var targetRange: String, var hba1c: String, var reminderTime: String, var reminderFrequency: String,
-    var isPrivacyMode: Boolean = false,
-    var isContextAwareAlerts: Boolean = true // 默认开启智能感知打断
+    var isPrivacyMode: Boolean = false, var isContextAwareAlerts: Boolean = true,
+    var isVacationMode: Boolean = false // 🆕 V13前沿理论：追踪疲劳的休眠模式
 )
 
 class ReportViewModel : ViewModel() {
@@ -166,15 +186,17 @@ class ReportViewModel : ViewModel() {
     val cgmNodes = mutableStateListOf<CgmNode>()
     val moodNodes = mutableStateListOf<MoodLog>()
 
+    private var lastActionType = ""
+
     var cgmReport = mutableStateOf(ClinicalCgmReport(
-        deviceInfo = "With v7 (Final) | 3min/次", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
+        deviceInfo = "With v13 (PhD Level) | 3min/次", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
         sd = "1.2", cv = "18.7% (<36%)", mage = "2.1", gmi = "6.1%", tirTarget = 92, tirHigh = 5, tirLow = 3,
         tbrLevel1 = "2%", tbrLevel2 = "1% (<3.0)", tarLevel1 = "4%", tarLevel2 = "1% (>13.9)",
         wearTime = "98%", completeness = "99.5%", signalLoss = "15 min", hypoEvents = 1, hyperEvents = 2, alertsTriggered = 3,
         clinicalAdvice = "今日血糖极佳，TIR 达标。趋势平稳，无需调整。"
     ))
     var moodReport = mutableStateOf(ClinicalMoodReport("7.5", "7.8", "0.9", "Low", 70, 20, 10, "2 (极轻)", "3 (极轻)", "12 (轻度)"))
-    var userProfile = mutableStateOf(UserProfile("28 岁", "女", "175 cm", "70 kg", "2023/05", "是", "二甲双胍", "3.9 - 10.0", "6.2 %", "餐后30分", "每天3次", false, true))
+    var userProfile = mutableStateOf(UserProfile("28 岁", "女", "175 cm", "70 kg", "2023/05", "是", "二甲双胍", "3.9 - 10.0", "6.2 %", "餐后30分", "每天3次", false, true, false))
 
     init {
         cgmNodes.addAll(listOf(
@@ -208,13 +230,27 @@ class ReportViewModel : ViewModel() {
         val time = timeMatch ?: java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
         val inputCleaned = if (timeMatch != null) input.replace(timeMatch, "") else input
         val extractedNumber = Regex("(\\d+\\.\\d+|\\d+)").find(inputCleaned)?.value?.toFloatOrNull()
+
+        if (Regex("身高|多高").containsMatchIn(inputCleaned)) {
+            val h = extractedNumber?.toInt() ?: 175
+            userProfile.value = userProfile.value.copy(height = "$h cm")
+            lastActionType = "profile"
+            return "✅ 已识别为个人档案信息！您的身高已自动更新为 $h cm，您可在『档案』页查看。"
+        }
+        if (Regex("体重|多重").containsMatchIn(inputCleaned)) {
+            val w = extractedNumber?.toInt() ?: 70
+            userProfile.value = userProfile.value.copy(weight = "$w kg")
+            lastActionType = "profile"
+            return "✅ 已识别为个人档案信息！您的体重已自动更新为 $w kg，您可在『档案』页查看。"
+        }
+
         var matchedSomething = false
 
-        if (Regex("血糖|低血糖|高血糖|测了|mmol").containsMatchIn(inputCleaned)) { addCgmNode(extractedNumber?.toDouble() ?: 5.5, time); matchedSomething = true }
-        if (Regex("胰岛素|打针|单位|U").containsMatchIn(inputCleaned)) { val units = extractedNumber ?: 2f; dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units)); matchedSomething = true }
-        if (Regex("吃|餐|饭|饮食|碳水").containsMatchIn(inputCleaned)) { val carbs = extractedNumber ?: 40f; dietLogs.add(0, DietEntry(time, inputCleaned, "约 ${carbs}g", carbs)); matchedSomething = true }
-        if (Regex("跑|步|运动|锻炼|健身|游泳|骑车").containsMatchIn(inputCleaned)) { val duration = extractedNumber ?: 30f; exerciseLogs.add(0, ExerciseEntry(time, inputCleaned, "${duration}min", duration)); matchedSomething = true }
-        if (Regex("心率|心跳|bpm|BPM").containsMatchIn(inputCleaned)) { hrLogs.add(0, HeartRateEntry(time, extractedNumber?.toInt() ?: 85, "自动识别")); matchedSomething = true }
+        if (Regex("血糖|低血糖|高血糖|测了|mmol").containsMatchIn(inputCleaned)) { addCgmNode(extractedNumber?.toDouble() ?: 5.5, time); lastActionType = "cgm"; matchedSomething = true }
+        else if (Regex("胰岛素|打针|单位|U").containsMatchIn(inputCleaned)) { val units = extractedNumber ?: 2f; dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units)); lastActionType = "diet"; matchedSomething = true }
+        else if (Regex("吃|餐|饭|饮食|碳水").containsMatchIn(inputCleaned)) { val carbs = extractedNumber ?: 40f; dietLogs.add(0, DietEntry(time, inputCleaned, "约 ${carbs}g", carbs)); lastActionType = "diet"; matchedSomething = true }
+        else if (Regex("跑|步|运动|锻炼|健身|游泳|骑车").containsMatchIn(inputCleaned)) { val duration = extractedNumber ?: 30f; exerciseLogs.add(0, ExerciseEntry(time, inputCleaned, "${duration}min", duration)); lastActionType = "exercise"; matchedSomething = true }
+        else if (Regex("心率|心跳|bpm|BPM").containsMatchIn(inputCleaned)) { hrLogs.add(0, HeartRateEntry(time, extractedNumber?.toInt() ?: 85, "自动识别")); lastActionType = "hr"; matchedSomething = true }
 
         val moodKeywords = Regex("心情|情绪|感觉|状态|开心|高兴|爽|好|难过|生气|郁闷|压力|累|烦|平稳|平静|差|低落")
         if (moodKeywords.containsMatchIn(inputCleaned) || !matchedSomething) {
@@ -224,13 +260,31 @@ class ReportViewModel : ViewModel() {
                 Regex("平稳|平静|还行|不错|好").containsMatchIn(inputCleaned) -> 7.0f
                 else -> extractedNumber ?: 6.5f
             }
-            addMoodNode(score, if (score >= 8f) "极佳" else if (score <= 4f) "低落" else "平稳", time)
+            val customLabel = if (inputCleaned.length > 8) inputCleaned.substring(0, 8) + "..." else inputCleaned
+            addMoodNode(score, if (score >= 8f) "极佳: $customLabel" else if (score <= 4f) "低落: $customLabel" else "平稳: $customLabel", time)
+            lastActionType = "mood"
+
+            // 🆕 V13前沿理论：反思性摩擦 (Reflective Friction)。低落时给予深呼吸支持，取代冷冰冰的“存入数据库”。
+            if (score <= 4f) {
+                return "收到你的记录。看起来此刻有些艰难，请允许自己深呼吸三次 🌬️。无论发生什么，我都在这里陪你。你需要休息一下吗？"
+            }
         }
-        return "✅ 已精准提取并存入数据库！可在『回顾』中查看。"
+        return "🎉 记录成功！干得漂亮，每一次记录都是在为健康投资。数据已整理至『回顾』中。"
+    }
+
+    fun undoLastAction(): String {
+        when (lastActionType) {
+            "cgm" -> if (cgmNodes.isNotEmpty()) cgmNodes.removeAt(cgmNodes.size - 1)
+            "mood" -> if (moodNodes.isNotEmpty()) moodNodes.removeAt(moodNodes.size - 1)
+            "diet" -> if (dietLogs.isNotEmpty()) dietLogs.removeAt(0)
+            "exercise" -> if (exerciseLogs.isNotEmpty()) exerciseLogs.removeAt(0)
+            "hr" -> if (hrLogs.isNotEmpty()) hrLogs.removeAt(0)
+            else -> return "没有可以撤销的操作。"
+        }
+        lastActionType = ""
+        return "↩️ 已成功撤销上一次的智能提取记录。"
     }
 
     fun addCgmNode(bg: Double, timeInput: String) { cgmNodes.add(CgmNode(timeInput.ifBlank { java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) }, bg, "↗", "3min", "+0.00")) }
     fun addMoodNode(score: Float, label: String, timeInput: String) { moodNodes.add(MoodLog(timeInput.ifBlank { java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) }, label, "手动记录", score)) }
-    fun addDiet(f: String, c: String) { val cv = c.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; dietLogs.add(0, DietEntry(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")), f, "${cv}g", cv)) }
-    fun addExercise(a: String, d: String) { val dv = d.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f; exerciseLogs.add(0, ExerciseEntry(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")), a, "${dv}min", dv)) }
 }

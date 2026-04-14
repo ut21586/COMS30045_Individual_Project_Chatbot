@@ -95,7 +95,7 @@ fun ChatView(
         ) {
             items(chatHistory.size) { index ->
                 val message = chatHistory[index]
-                ChatBubble(message = message)
+                ChatBubble(message = message, onUndo = {})
             }
         }
     }
