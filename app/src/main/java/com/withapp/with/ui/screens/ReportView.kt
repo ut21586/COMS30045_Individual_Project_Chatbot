@@ -1,4 +1,5 @@
 //
+//
 //package com.withapp.with.ui.screens
 //
 //import androidx.compose.ui.graphics.nativeCanvas
@@ -12,7 +13,6 @@
 //import androidx.compose.foundation.shape.RoundedCornerShape
 //import androidx.compose.foundation.verticalScroll
 //import androidx.compose.material.icons.Icons
-//import androidx.compose.material.icons.automirrored.filled.ArrowBack
 //import androidx.compose.material.icons.filled.Add
 //import androidx.compose.material.icons.filled.Info
 //import androidx.compose.material.icons.filled.Search
@@ -34,7 +34,8 @@
 //
 //@OptIn(ExperimentalMaterial3Api::class)
 //@Composable
-//fun ReportView(reportViewModel: ReportViewModel, onBack: () -> Unit = {}) {
+//// 🆕 V6修复：去除了 onBack 回调参数，因为这页在底部导航栏，不需要全局返回，减少认知负担
+//fun ReportView(reportViewModel: ReportViewModel) {
 //    val scrollState = rememberScrollState()
 //    val cgmNodes = reportViewModel.cgmNodes
 //    val moodNodes = reportViewModel.moodNodes
@@ -45,58 +46,62 @@
 //    var showMoodDialog by remember { mutableStateOf(false) }
 //    var showCgmHistoryDialog by remember { mutableStateOf(false) }
 //    var showMoodHistoryDialog by remember { mutableStateOf(false) }
-//
-//    // 🆕 终极修改：数据素养词典弹窗
 //    var showGlossaryDialog by remember { mutableStateOf(false) }
 //
 //    Scaffold(
 //        topBar = {
-//            // 🆕 去医疗化：标题更加平易近人
-//            TopAppBar(title = { Text("我的健康与情绪回顾", fontWeight = FontWeight.Bold, fontSize = 16.sp) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) } })
+//            // 🆕 V6修复：移除了多余的 navigationIcon
+//            TopAppBar(title = { Text("我的健康与情绪回顾", fontWeight = FontWeight.Bold, fontSize = 16.sp) })
 //        }
 //    ) { paddingValues ->
-//        Column(modifier = Modifier.fillMaxSize().padding(paddingValues).background(Color(0xFFF7F9FA)).verticalScroll(scrollState).padding(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+//        // 🆕 V6修复：将 TimeScaleSelector 抽离出 ScrollState，实现“吸顶(Sticky Header)”效果
+//        Column(modifier = Modifier.fillMaxSize().padding(paddingValues).background(Color(0xFFF7F9FA))) {
 //
-//            TimeScaleSelector(selectedScale = reportViewModel.currentScale.value, onScaleSelect = { reportViewModel.currentScale.value = it })
-//
-//            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))) {
-//                Column(modifier = Modifier.padding(16.dp)) {
-//                    Text("🌟 今日状态摘要", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF1565C0))
-//                    Spacer(modifier = Modifier.height(8.dp))
-//                    Text("您今天的血糖 TIR 达标率为 92%，整体控制极佳。下午 16:00 记录了一次压力情绪，可能伴随着轻微的血糖波动。请注意劳逸结合。", fontSize = 12.sp, color = Color.DarkGray, lineHeight = 18.sp)
-//                }
+//            // 吸顶的时间切换器
+//            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+//                TimeScaleSelector(selectedScale = reportViewModel.currentScale.value, onScaleSelect = { reportViewModel.currentScale.value = it })
 //            }
 //
-//            CorrelationChartCard(cgmNodes, moodNodes)
-//
-//            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-//                Text("📊 血糖趋势与分析", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF008080))
-//                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-//                    // 🆕 数据词典入口
-//                    IconButton(onClick = { showGlossaryDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFF008080).copy(0.1f), CircleShape)) { Icon(Icons.Default.Info, contentDescription = "Glossary", tint = Color(0xFF008080), modifier = Modifier.size(16.dp)) }
-//                    IconButton(onClick = { showCgmHistoryDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFF008080).copy(0.1f), CircleShape)) { Icon(Icons.Default.Search, contentDescription = "History", tint = Color(0xFF008080), modifier = Modifier.size(16.dp)) }
-//                    IconButton(onClick = { showCgmDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFF008080).copy(0.1f), CircleShape)) { Icon(Icons.Default.Add, contentDescription = "Add", tint = Color(0xFF008080), modifier = Modifier.size(18.dp)) }
+//            // 下方的滚动内容区
+//            Column(modifier = Modifier.weight(1f).verticalScroll(scrollState).padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+//                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))) {
+//                    Column(modifier = Modifier.padding(16.dp)) {
+//                        Text("🌟 今日状态摘要", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF1565C0))
+//                        Spacer(modifier = Modifier.height(8.dp))
+//                        Text("您今天的血糖 TIR 达标率为 92%，整体控制极佳。下午 16:00 记录了一次压力情绪，可能伴随着轻微的血糖波动。请注意劳逸结合。", fontSize = 12.sp, color = Color.DarkGray, lineHeight = 18.sp)
+//                    }
 //                }
-//            }
-//            ClinicalCgmCard(cgmRep, cgmNodes)
 //
-//            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-//                Text("🧠 情绪起伏追踪", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFFFFB74D))
-//                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-//                    IconButton(onClick = { showMoodHistoryDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFFFFB74D).copy(0.1f), CircleShape)) { Icon(Icons.Default.Search, contentDescription = "History", tint = Color(0xFFFFB74D), modifier = Modifier.size(16.dp)) }
-//                    IconButton(onClick = { showMoodDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFFFFB74D).copy(0.1f), CircleShape)) { Icon(Icons.Default.Add, contentDescription = "Add", tint = Color(0xFFFFB74D), modifier = Modifier.size(18.dp)) }
+//                CorrelationChartCard(cgmNodes, moodNodes)
+//
+//                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+//                    Text("📊 血糖趋势与分析", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF008080))
+//                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+//                        IconButton(onClick = { showGlossaryDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFF008080).copy(0.1f), CircleShape)) { Icon(Icons.Default.Info, contentDescription = "Glossary", tint = Color(0xFF008080), modifier = Modifier.size(16.dp)) }
+//                        IconButton(onClick = { showCgmHistoryDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFF008080).copy(0.1f), CircleShape)) { Icon(Icons.Default.Search, contentDescription = "History", tint = Color(0xFF008080), modifier = Modifier.size(16.dp)) }
+//                        IconButton(onClick = { showCgmDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFF008080).copy(0.1f), CircleShape)) { Icon(Icons.Default.Add, contentDescription = "Add", tint = Color(0xFF008080), modifier = Modifier.size(18.dp)) }
+//                    }
 //                }
+//                ClinicalCgmCard(cgmRep, cgmNodes)
+//
+//                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+//                    Text("🧠 情绪起伏追踪", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFFFFB74D))
+//                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+//                        IconButton(onClick = { showMoodHistoryDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFFFFB74D).copy(0.1f), CircleShape)) { Icon(Icons.Default.Search, contentDescription = "History", tint = Color(0xFFFFB74D), modifier = Modifier.size(16.dp)) }
+//                        IconButton(onClick = { showMoodDialog = true }, modifier = Modifier.size(28.dp).background(Color(0xFFFFB74D).copy(0.1f), CircleShape)) { Icon(Icons.Default.Add, contentDescription = "Add", tint = Color(0xFFFFB74D), modifier = Modifier.size(18.dp)) }
+//                    }
+//                }
+//                ClinicalMoodCard(moodRep, moodNodes)
+//
+//                Text("🛡️ 生活方式记录", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF5C6BC0))
+//                HealthListCard("🍏 饮食与用药", Color(0xFF81C784), reportViewModel.dietLogs.toList(), { }, { it.numericValue }, { "${it.time} - ${it.food} (${it.carbs})" })
+//                HealthListCard("🏃 活动与心率", Color(0xFF4FC3F7), reportViewModel.exerciseLogs.toList(), { }, { it.numericValue }, { "${it.time} - ${it.activity} (${it.duration})" })
+//
+//                Spacer(Modifier.height(40.dp))
 //            }
-//            ClinicalMoodCard(moodRep, moodNodes)
-//
-//            Text("🛡️ 生活方式记录", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF5C6BC0))
-//            HealthListCard("🍏 饮食与用药", Color(0xFF81C784), reportViewModel.dietLogs.toList(), { }, { it.numericValue }, { "${it.time} - ${it.food} (${it.carbs})" })
-//            HealthListCard("🏃 活动与心率", Color(0xFF4FC3F7), reportViewModel.exerciseLogs.toList(), { }, { it.numericValue }, { "${it.time} - ${it.activity} (${it.duration})" })
-//
-//            Spacer(Modifier.height(40.dp))
 //        }
 //
-//        // --- 🆕 字典弹窗 ---
+//        // --- 字典弹窗 ---
 //        if (showGlossaryDialog) {
 //            AlertDialog(
 //                onDismissRequest = { showGlossaryDialog = false },
@@ -112,16 +117,17 @@
 //            )
 //        }
 //
+//        // 🆕 V6修复：给所有的操作弹窗加上了“取消(Cancel)”按钮，赋予用户自由退出的权力
 //        if (showCgmDialog) {
 //            var v1 by remember { mutableStateOf("") }; var v2 by remember { mutableStateOf("") }
 //            AlertDialog(onDismissRequest = { showCgmDialog = false },
 //                title = { Text("记录单次血糖", fontWeight = FontWeight.Bold, fontSize = 16.sp) },
 //                text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { OutlinedTextField(v1, {v1=it}, label={Text("血糖值 (mmol/L)", fontSize=12.sp)}, modifier = Modifier.fillMaxWidth()); OutlinedTextField(v2, {v2=it}, label={Text("时间戳 (如 14:30)", fontSize=12.sp)}, modifier = Modifier.fillMaxWidth()) } },
-//                confirmButton = { Button(onClick = { reportViewModel.addCgmNode(v1.toDoubleOrNull() ?: 5.5, v2); showCgmDialog = false }) { Text("保存") } }
+//                confirmButton = { Button(onClick = { reportViewModel.addCgmNode(v1.toDoubleOrNull() ?: 5.5, v2); showCgmDialog = false }) { Text("保存") } },
+//                dismissButton = { TextButton(onClick = { showCgmDialog = false }) { Text("取消", color = Color.Gray) } } // 添加紧急出口
 //            )
 //        }
 //
-//        // 🆕 终极修改：情绪输入框加入明确的锚点说明
 //        if (showMoodDialog) {
 //            var v1 by remember { mutableStateOf("") }; var v2 by remember { mutableStateOf("") }; var v3 by remember { mutableStateOf("") }
 //            AlertDialog(onDismissRequest = { showMoodDialog = false },
@@ -132,7 +138,8 @@
 //                    OutlinedTextField(v2, {v2=it}, label={Text("标签 (如 开心/压力)", fontSize=12.sp)}, modifier = Modifier.fillMaxWidth())
 //                    OutlinedTextField(v3, {v3=it}, label={Text("时间", fontSize=12.sp)}, modifier = Modifier.fillMaxWidth())
 //                } },
-//                confirmButton = { Button(onClick = { reportViewModel.addMoodNode(v1.toFloatOrNull() ?: 7.0f, v2.ifBlank { "平稳" }, v3); showMoodDialog = false }) { Text("保存") } }
+//                confirmButton = { Button(onClick = { reportViewModel.addMoodNode(v1.toFloatOrNull() ?: 7.0f, v2.ifBlank { "平稳" }, v3); showMoodDialog = false }) { Text("保存") } },
+//                dismissButton = { TextButton(onClick = { showMoodDialog = false }) { Text("取消", color = Color.Gray) } } // 添加紧急出口
 //            )
 //        }
 //
@@ -360,8 +367,10 @@
 //    }
 //}
 
+
 package com.withapp.with.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -376,6 +385,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -394,7 +405,6 @@ import com.withapp.with.viewmodels.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// 🆕 V6修复：去除了 onBack 回调参数，因为这页在底部导航栏，不需要全局返回，减少认知负担
 fun ReportView(reportViewModel: ReportViewModel) {
     val scrollState = rememberScrollState()
     val cgmNodes = reportViewModel.cgmNodes
@@ -408,21 +418,13 @@ fun ReportView(reportViewModel: ReportViewModel) {
     var showMoodHistoryDialog by remember { mutableStateOf(false) }
     var showGlossaryDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            // 🆕 V6修复：移除了多余的 navigationIcon
-            TopAppBar(title = { Text("我的健康与情绪回顾", fontWeight = FontWeight.Bold, fontSize = 16.sp) })
-        }
-    ) { paddingValues ->
-        // 🆕 V6修复：将 TimeScaleSelector 抽离出 ScrollState，实现“吸顶(Sticky Header)”效果
+    Scaffold { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues).background(Color(0xFFF7F9FA))) {
 
-            // 吸顶的时间切换器
-            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).padding(top = 8.dp)) {
                 TimeScaleSelector(selectedScale = reportViewModel.currentScale.value, onScaleSelect = { reportViewModel.currentScale.value = it })
             }
 
-            // 下方的滚动内容区
             Column(modifier = Modifier.weight(1f).verticalScroll(scrollState).padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
                 Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -461,7 +463,6 @@ fun ReportView(reportViewModel: ReportViewModel) {
             }
         }
 
-        // --- 字典弹窗 ---
         if (showGlossaryDialog) {
             AlertDialog(
                 onDismissRequest = { showGlossaryDialog = false },
@@ -477,14 +478,13 @@ fun ReportView(reportViewModel: ReportViewModel) {
             )
         }
 
-        // 🆕 V6修复：给所有的操作弹窗加上了“取消(Cancel)”按钮，赋予用户自由退出的权力
         if (showCgmDialog) {
             var v1 by remember { mutableStateOf("") }; var v2 by remember { mutableStateOf("") }
             AlertDialog(onDismissRequest = { showCgmDialog = false },
                 title = { Text("记录单次血糖", fontWeight = FontWeight.Bold, fontSize = 16.sp) },
                 text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { OutlinedTextField(v1, {v1=it}, label={Text("血糖值 (mmol/L)", fontSize=12.sp)}, modifier = Modifier.fillMaxWidth()); OutlinedTextField(v2, {v2=it}, label={Text("时间戳 (如 14:30)", fontSize=12.sp)}, modifier = Modifier.fillMaxWidth()) } },
                 confirmButton = { Button(onClick = { reportViewModel.addCgmNode(v1.toDoubleOrNull() ?: 5.5, v2); showCgmDialog = false }) { Text("保存") } },
-                dismissButton = { TextButton(onClick = { showCgmDialog = false }) { Text("取消", color = Color.Gray) } } // 添加紧急出口
+                dismissButton = { TextButton(onClick = { showCgmDialog = false }) { Text("取消", color = Color.Gray) } }
             )
         }
 
@@ -499,7 +499,7 @@ fun ReportView(reportViewModel: ReportViewModel) {
                     OutlinedTextField(v3, {v3=it}, label={Text("时间", fontSize=12.sp)}, modifier = Modifier.fillMaxWidth())
                 } },
                 confirmButton = { Button(onClick = { reportViewModel.addMoodNode(v1.toFloatOrNull() ?: 7.0f, v2.ifBlank { "平稳" }, v3); showMoodDialog = false }) { Text("保存") } },
-                dismissButton = { TextButton(onClick = { showMoodDialog = false }) { Text("取消", color = Color.Gray) } } // 添加紧急出口
+                dismissButton = { TextButton(onClick = { showMoodDialog = false }) { Text("取消", color = Color.Gray) } }
             )
         }
 
@@ -617,23 +617,19 @@ fun CorrelationChartCard(cgmNodes: List<CgmNode>, moodNodes: List<MoodLog>) {
 
 @Composable
 fun ClinicalCgmCard(report: ClinicalCgmReport, nodes: List<CgmNode>) {
+    // 🆕 V8 终极修改：渐进式揭示 (Progressive Disclosure) 控制状态
+    var showAdvancedMetrics by remember { mutableStateOf(false) }
+
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                MetricItem("平均血糖", report.avgGlucose); MetricItem("波动 (CV)", report.cv); MetricItem("MAGE指标", report.mage)
+
+            // 基础信息：始终显示
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                MetricItem("今日平均血糖", report.avgGlucose)
+                Text(report.clinicalAdvice, fontSize = 11.sp, color = Color(0xFF008080), modifier = Modifier.weight(1f).padding(start = 12.dp), lineHeight = 16.sp)
             }
 
-            Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF1F8E9), RoundedCornerShape(8.dp)).padding(10.dp)) {
-                Text("🎯 TIR 目标达标率", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).height(12.dp).clip(CircleShape)) {
-                    Box(modifier = Modifier.weight(report.tirLow.toFloat()).fillMaxHeight().background(Color(0xFF64B5F6)))
-                    Box(modifier = Modifier.weight(report.tirTarget.toFloat()).fillMaxHeight().background(Color(0xFF4CAF50)))
-                    Box(modifier = Modifier.weight(report.tirHigh.toFloat()).fillMaxHeight().background(Color(0xFFE57373)))
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("低血糖: ${report.tbrLevel1}", fontSize = 10.sp); Text("达标: ${report.tirTarget}%", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF4CAF50)); Text("高血糖: ${report.tarLevel1}", fontSize = 10.sp)
-                }
-            }
+            // 📍 24小时走势图 (核心可视化)：始终显示
             Text("📍 AGP 24小时走势图", fontWeight = FontWeight.Bold, fontSize = 13.sp)
             Box(modifier = Modifier.fillMaxWidth().height(220.dp).background(Color(0xFFFAFAFA), RoundedCornerShape(8.dp)).padding(8.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).width((nodes.size * 45).coerceAtLeast(350).dp)) {
@@ -661,6 +657,33 @@ fun ClinicalCgmCard(report: ClinicalCgmReport, nodes: List<CgmNode>) {
                     }
                 }
             }
+
+            // 🆕 展开按钮
+            Row(modifier = Modifier.fillMaxWidth().clickable { showAdvancedMetrics = !showAdvancedMetrics }.padding(vertical = 4.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                Text(if (showAdvancedMetrics) "收起临床指标" else "查看专业临床指标", fontSize = 12.sp, color = Color(0xFF008080), fontWeight = FontWeight.Bold)
+                Icon(if (showAdvancedMetrics) Icons.Default.ExpandLess else Icons.Default.ExpandMore, null, tint = Color(0xFF008080), modifier = Modifier.size(16.dp))
+            }
+
+            // 🆕 渐进式揭示的高级指标
+            AnimatedVisibility(visible = showAdvancedMetrics) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    HorizontalDivider(color = Color(0xFFF1F1F1))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        MetricItem("波动 (CV)", report.cv); MetricItem("MAGE指标", report.mage); MetricItem("GMI 预估", report.gmi)
+                    }
+                    Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF1F8E9), RoundedCornerShape(8.dp)).padding(10.dp)) {
+                        Text("🎯 TIR 目标达标率", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).height(12.dp).clip(CircleShape)) {
+                            Box(modifier = Modifier.weight(report.tirLow.toFloat()).fillMaxHeight().background(Color(0xFF64B5F6)))
+                            Box(modifier = Modifier.weight(report.tirTarget.toFloat()).fillMaxHeight().background(Color(0xFF4CAF50)))
+                            Box(modifier = Modifier.weight(report.tirHigh.toFloat()).fillMaxHeight().background(Color(0xFFE57373)))
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("低血糖: ${report.tbrLevel1}", fontSize = 10.sp); Text("达标: ${report.tirTarget}%", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF4CAF50)); Text("高血糖: ${report.tarLevel1}", fontSize = 10.sp)
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -676,16 +699,23 @@ fun ClinicalMoodCard(report: ClinicalMoodReport, nodes: List<MoodLog>) {
                 }
             }
             Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                Canvas(modifier = Modifier.width((nodes.size * 45).coerceAtLeast(300).dp).height(140.dp)) {
-                    val ep = android.graphics.Paint().apply { textSize = 40f }
-                    drawContext.canvas.nativeCanvas.drawText("😊", 0f, 40f, ep); drawContext.canvas.nativeCanvas.drawText("😞", 0f, size.height, ep)
+                Canvas(modifier = Modifier.width((nodes.size * 45).coerceAtLeast(300).dp).height(160.dp)) {
+                    val ep = android.graphics.Paint().apply { textSize = 35f }
+
+                    // 🆕 V8 终极修改：多极情感效价标尺 (Multi-Valence Scale)，解决 P2 "只有哭笑两个表情"
+                    drawContext.canvas.nativeCanvas.drawText("🤩", 0f, 35f, ep) // 10分
+                    drawContext.canvas.nativeCanvas.drawText("🙂", 0f, size.height * 0.35f, ep) // 7分
+                    drawContext.canvas.nativeCanvas.drawText("😐", 0f, size.height * 0.65f, ep) // 4分
+                    drawContext.canvas.nativeCanvas.drawText("😞", 0f, size.height - 5f, ep) // 0分
+
                     val p = Path()
                     nodes.forEachIndexed { i, n ->
-                        val x = if(nodes.size > 1) (i.toFloat() / (nodes.size - 1)) * (size.width - 40f) + 40f else size.width / 2
+                        // 为表情留出 40f 的左侧边距
+                        val x = if(nodes.size > 1) (i.toFloat() / (nodes.size - 1)) * (size.width - 50f) + 50f else size.width / 2
                         val y = size.height - (n.numericScore / 10f) * size.height
                         if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
                         drawCircle(Color(0xFF90CAF9), 6f, Offset(x, y))
-                        drawContext.canvas.nativeCanvas.drawText("${n.numericScore}", x-10f, if(i%2==0) y-10f else y+20f, android.graphics.Paint().apply { textSize=18f; color=android.graphics.Color.DKGRAY })
+                        drawContext.canvas.nativeCanvas.drawText("${n.numericScore}", x-10f, if(i%2==0) y-15f else y+25f, android.graphics.Paint().apply { textSize=18f; color=android.graphics.Color.DKGRAY })
                     }
                     drawPath(p, Color(0xFF7986CB), style = Stroke(3f))
                 }

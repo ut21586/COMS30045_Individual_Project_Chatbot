@@ -1,4 +1,4 @@
-//
+
 //
 //package com.withapp.with.ui.screens
 //
@@ -17,6 +17,8 @@
 //import androidx.compose.material.icons.filled.AccountCircle
 //import androidx.compose.material.icons.filled.Assessment
 //import androidx.compose.material.icons.filled.Home
+//import androidx.compose.material.icons.filled.Mic
+//import androidx.compose.material.icons.filled.ArrowDropDown
 //import androidx.compose.material3.*
 //import androidx.compose.runtime.*
 //import androidx.compose.ui.Alignment
@@ -36,45 +38,30 @@
 //
 //@OptIn(ExperimentalMaterial3Api::class)
 //@Composable
+//// 🔴 修复：把这只接权限的“手”加回来了！
 //fun MainContainer(onRequestPermission: () -> Unit = {}) {
-//    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 //    val snackbarHostState = remember { SnackbarHostState() }
-//    val scope = rememberCoroutineScope()
 //    var selectedTab by remember { mutableStateOf("home") }
 //    val reportViewModel: ReportViewModel = viewModel()
 //
-//    ModalNavigationDrawer(
-//        drawerState = drawerState,
-//        drawerContent = {
-//            ModalDrawerSheet(modifier = Modifier.width(320.dp), drawerContainerColor = Color(0xFFF7F9FA)) {
-//                ProfileSidebarContent(reportViewModel)
+//    Scaffold(
+//        snackbarHost = { SnackbarHost(snackbarHostState) },
+//        topBar = {
+//            CenterAlignedTopAppBar(title = { Text("With", fontWeight = FontWeight.Bold, color = Color(0xFF008080)) })
+//        },
+//        bottomBar = {
+//            NavigationBar(containerColor = Color.White) {
+//                NavigationBarItem(selected = selectedTab == "home", onClick = { selectedTab = "home" }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("主页") })
+//                NavigationBarItem(selected = selectedTab == "report", onClick = { selectedTab = "report" }, icon = { Icon(Icons.Default.Assessment, null) }, label = { Text("回顾") })
+//                NavigationBarItem(selected = selectedTab == "profile", onClick = { selectedTab = "profile" }, icon = { Icon(Icons.Default.AccountCircle, null) }, label = { Text("档案") })
 //            }
 //        }
-//    ) {
-//        Scaffold(
-//            snackbarHost = { SnackbarHost(snackbarHostState) },
-//            topBar = {
-//                CenterAlignedTopAppBar(
-//                    title = { Text("With", fontWeight = FontWeight.Bold) },
-//                    navigationIcon = {
-//                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-//                            Icon(Icons.Default.AccountCircle, contentDescription = null, tint = Color(0xFF008080), modifier = Modifier.size(32.dp))
-//                        }
-//                    }
-//                )
-//            },
-//            bottomBar = {
-//                NavigationBar(containerColor = Color.White) {
-//                    NavigationBarItem(selected = selectedTab == "home", onClick = { selectedTab = "home" }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("主页") })
-//                    NavigationBarItem(selected = selectedTab == "report", onClick = { selectedTab = "report" }, icon = { Icon(Icons.Default.Assessment, null) }, label = { Text("回顾") }) // 去医疗化：将“报告”改为“回顾”
-//                }
-//            }
-//        ) { padding ->
-//            Box(modifier = Modifier.padding(padding)) {
-//                when (selectedTab) {
-//                    "home" -> HomeV3View(reportViewModel, snackbarHostState)
-//                    "report" -> ReportView(reportViewModel)
-//                }
+//    ) { padding ->
+//        Box(modifier = Modifier.padding(padding)) {
+//            when (selectedTab) {
+//                "home" -> HomeV3View(reportViewModel, snackbarHostState)
+//                "report" -> ReportView(reportViewModel)
+//                "profile" -> ProfileView(reportViewModel)
 //            }
 //        }
 //    }
@@ -94,7 +81,7 @@
 //        hour in 11..13 -> "午餐时间，记录一下碳水摄入吧..."
 //        hour in 17..19 -> "晚餐吃了什么？现在心情如何？..."
 //        hour > 20 -> "准备休息了吗？记录一下睡前状态..."
-//        else -> "用日常对话记录血糖、饮食或情绪..."
+//        else -> "用日常对话记录数据..."
 //    }
 //
 //    if (showRabbitInfo) {
@@ -132,6 +119,9 @@
 //                placeholder = { Text(dynamicPlaceholder, fontSize = 12.sp, color = Color.Gray) },
 //                modifier = Modifier.weight(1f), shape = RoundedCornerShape(24.dp)
 //            )
+//            IconButton(onClick = { scope.launch { snackbarHostState.showSnackbar("🎙️ 语音输入模块将在未来版本接入") } }) {
+//                Icon(Icons.Default.Mic, contentDescription = "Voice", tint = Color.Gray)
+//            }
 //            IconButton(onClick = {
 //                if (inputText.isNotBlank()) {
 //                    val reply = reportViewModel.processChatInput(inputText)
@@ -186,7 +176,7 @@
 //}
 //
 //@Composable
-//fun ProfileSidebarContent(reportViewModel: ReportViewModel) {
+//fun ProfileView(reportViewModel: ReportViewModel) {
 //    val scrollState = rememberScrollState()
 //    var isEditing by remember { mutableStateOf(false) }
 //
@@ -203,23 +193,25 @@
 //    var reminderTime by remember(profile) { mutableStateOf(profile.reminderTime) }
 //    var reminderFrequency by remember(profile) { mutableStateOf(profile.reminderFrequency) }
 //    var isPrivacyMode by remember(profile) { mutableStateOf(profile.isPrivacyMode) }
+//    var isContextAwareAlerts by remember(profile) { mutableStateOf(profile.isContextAwareAlerts) }
+//
 //    var showMockPrompt by remember { mutableStateOf(false) }
 //
 //    if (showMockPrompt) {
 //        AlertDialog(
 //            onDismissRequest = { showMockPrompt = false },
-//            title = { Text("🐰 With 智能提醒", fontWeight = FontWeight.Bold) },
-//            text = { Text("系统检测到您刚吃完午餐。现在方便记录一下血糖和情绪吗？") },
+//            title = { Text("🐰 智能感知提醒 (Context-Aware)", fontWeight = FontWeight.Bold) },
+//            text = { Text("系统监测到您刚完成一段高强度的会议 (心率波动)。您现在的压力水平如何？需要记录一下情绪吗？") },
 //            confirmButton = { Button(onClick = { showMockPrompt = false }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF008080))) { Text("去记录") } },
-//            dismissButton = { Row { TextButton(onClick = { showMockPrompt = false }) { Text("稍后 15m", color = Color.Gray) }; TextButton(onClick = { showMockPrompt = false }) { Text("不方便", color = Color.Red) } } }
+//            dismissButton = { Row { TextButton(onClick = { showMockPrompt = false }) { Text("稍后", color = Color.Gray) }; TextButton(onClick = { showMockPrompt = false }) { Text("不需要", color = Color.Red) } } }
 //        )
 //    }
 //
-//    Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(24.dp)) {
+//    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA)).verticalScroll(scrollState).padding(24.dp)) {
 //        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-//            Text("档案与设置", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080))
+//            Text("档案与偏好设置", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080))
 //            TextButton(onClick = {
-//                if (isEditing) reportViewModel.userProfile.value = UserProfile(age, gender, height, weight, diagnosis, insulin, medication, targetRange, hba1c, reminderTime, reminderFrequency, isPrivacyMode)
+//                if (isEditing) reportViewModel.userProfile.value = UserProfile(age, gender, height, weight, diagnosis, insulin, medication, targetRange, hba1c, reminderTime, reminderFrequency, isPrivacyMode, isContextAwareAlerts)
 //                isEditing = !isEditing
 //            }) { Text(if (isEditing) "保存" else "编辑", color = Color(0xFF008080), fontWeight = FontWeight.Bold) }
 //        }
@@ -229,47 +221,77 @@
 //                Text("开启隐私掩码模式", fontWeight = FontWeight.Bold, fontSize = 13.sp)
 //                Text("在公共场合隐藏敏感健康数据", fontSize = 10.sp, color = Color.Gray)
 //            }
-//            Switch(
-//                checked = isPrivacyMode,
-//                onCheckedChange = {
-//                    isPrivacyMode = it
-//                    reportViewModel.userProfile.value = reportViewModel.userProfile.value.copy(isPrivacyMode = it)
-//                },
-//                colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3F51B5), checkedTrackColor = Color(0xFFC5CAE9))
-//            )
+//            Switch(checked = isPrivacyMode, onCheckedChange = { isPrivacyMode = it; reportViewModel.userProfile.value = reportViewModel.userProfile.value.copy(isPrivacyMode = it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3F51B5), checkedTrackColor = Color(0xFFC5CAE9)))
 //        }
 //
 //        Spacer(Modifier.height(16.dp))
 //        Text("基本信息", fontWeight = FontWeight.Bold, color = Color(0xFF008080), fontSize = 14.sp)
-//        EditableProfileRow("年龄", age, isEditing) { age = it }; EditableProfileRow("性别", gender, isEditing) { gender = it }
-//        EditableProfileRow("身高", height, isEditing) { height = it }; EditableProfileRow("体重", weight, isEditing) { weight = it }
+//        val editTrigger = { isEditing = true }
+//        EditableProfileRow("年龄", age, isEditing, editTrigger) { age = it }
+//        DropdownProfileRow("性别", gender, listOf("男", "女", "其他"), isEditing) { gender = it }
+//        EditableProfileRow("身高", height, isEditing, editTrigger) { height = it }
+//        EditableProfileRow("体重", weight, isEditing, editTrigger) { weight = it }
 //
 //        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 //        Text("健康背景", fontWeight = FontWeight.Bold, color = Color(0xFF008080), fontSize = 14.sp)
-//        EditableProfileRow("确诊时间", if (isPrivacyMode && !isEditing) "****" else diagnosis, isEditing) { diagnosis = it }
-//        EditableProfileRow("使用胰岛素", insulin, isEditing) { insulin = it }
-//        EditableProfileRow("用药情况", if (isPrivacyMode && !isEditing) "****" else medication, isEditing) { medication = it }
-//        EditableProfileRow("目标血糖", targetRange, isEditing) { targetRange = it }
-//        EditableProfileRow("最近HbA1c", if (isPrivacyMode && !isEditing) "***%" else hba1c, isEditing) { hba1c = it }
+//        EditableProfileRow("确诊时间", if (isPrivacyMode && !isEditing) "****" else diagnosis, isEditing, editTrigger) { diagnosis = it }
+//        DropdownProfileRow("使用胰岛素", insulin, listOf("是", "否"), isEditing) { insulin = it }
+//        EditableProfileRow("用药情况", if (isPrivacyMode && !isEditing) "****" else medication, isEditing, editTrigger) { medication = it }
+//        EditableProfileRow("目标血糖", targetRange, isEditing, editTrigger) { targetRange = it }
+//        EditableProfileRow("最近HbA1c", if (isPrivacyMode && !isEditing) "***%" else hba1c, isEditing, editTrigger) { hba1c = it }
 //
 //        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 //        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFFFF3E0), RoundedCornerShape(8.dp)).padding(12.dp)) {
-//            Text("🔔 智能提醒设置", fontWeight = FontWeight.Bold, color = Color(0xFFE65100), fontSize = 14.sp)
-//            EditableProfileRow("触发时机", reminderTime, isEditing) { reminderTime = it }; EditableProfileRow("提醒频率", reminderFrequency, isEditing) { reminderFrequency = it }
+//            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+//                Column(modifier = Modifier.weight(1f)) {
+//                    Text("🔔 智能感知提醒 (JITAI)", fontWeight = FontWeight.Bold, color = Color(0xFFE65100), fontSize = 14.sp)
+//                    Text("根据您的血糖趋势和生活习惯自动推送提醒，替代死板的定时闹钟", fontSize = 10.sp, color = Color.Gray, lineHeight = 14.sp)
+//                }
+//                Switch(checked = isContextAwareAlerts, onCheckedChange = { isContextAwareAlerts = it }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFE65100), checkedTrackColor = Color(0xFFFFCC80)))
+//            }
+//
+//            if (!isContextAwareAlerts) {
+//                EditableProfileRow("提醒时间", reminderTime, isEditing, editTrigger) { reminderTime = it }
+//                DropdownProfileRow("提醒频率", reminderFrequency, listOf("每天1次", "每天3次", "仅异常时"), isEditing) { reminderFrequency = it }
+//            }
+//
 //            Spacer(Modifier.height(12.dp))
-//            Button(onClick = { showMockPrompt = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))) { Text("🔬 测试打断机制", fontSize = 12.sp) }
+//            Button(onClick = { showMockPrompt = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))) { Text("🔬 测试智能打断机制", fontSize = 12.sp) }
 //        }
 //    }
 //}
 //
 //@Composable
-//fun EditableProfileRow(label: String, value: String, isEditing: Boolean, onValueChange: (String) -> Unit) {
-//    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+//fun EditableProfileRow(label: String, value: String, isEditing: Boolean, onRowClick: () -> Unit, onValueChange: (String) -> Unit) {
+//    Row(modifier = Modifier.fillMaxWidth().clickable(enabled = !isEditing) { onRowClick() }.padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
 //        Text(label, color = Color.Gray, modifier = Modifier.weight(0.45f), fontSize = 12.sp)
 //        if (isEditing) {
 //            OutlinedTextField(value = value, onValueChange = onValueChange, modifier = Modifier.weight(0.55f).height(50.dp), singleLine = true, textStyle = TextStyle(fontSize = 12.sp, textAlign = TextAlign.End))
 //        } else {
 //            Text(value, fontWeight = FontWeight.Medium, modifier = Modifier.weight(0.55f), textAlign = TextAlign.End, fontSize = 12.sp)
+//        }
+//    }
+//}
+//
+//@Composable
+//fun DropdownProfileRow(label: String, value: String, options: List<String>, isEditing: Boolean, onValueChange: (String) -> Unit) {
+//    var expanded by remember { mutableStateOf(false) }
+//    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+//        Text(label, color = Color.Gray, modifier = Modifier.weight(0.45f), fontSize = 12.sp)
+//        Box(modifier = Modifier.weight(0.55f), contentAlignment = Alignment.CenterEnd) {
+//            if (isEditing) {
+//                Row(modifier = Modifier.clickable { expanded = true }.padding(8.dp).background(Color(0xFFF1F1F1), RoundedCornerShape(4.dp)).padding(horizontal=8.dp, vertical=4.dp), verticalAlignment = Alignment.CenterVertically) {
+//                    Text(value, color = Color(0xFF008080), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+//                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color(0xFF008080))
+//                }
+//                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+//                    options.forEach { opt ->
+//                        DropdownMenuItem(text = { Text(opt, fontSize = 12.sp) }, onClick = { onValueChange(opt); expanded = false })
+//                    }
+//                }
+//            } else {
+//                Text(value, fontWeight = FontWeight.Medium, textAlign = TextAlign.End, fontSize = 12.sp)
+//            }
 //        }
 //    }
 //}
@@ -313,7 +335,6 @@ import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// 🔴 修复：把这只接权限的“手”加回来了！
 fun MainContainer(onRequestPermission: () -> Unit = {}) {
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedTab by remember { mutableStateOf("home") }
@@ -322,7 +343,15 @@ fun MainContainer(onRequestPermission: () -> Unit = {}) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            CenterAlignedTopAppBar(title = { Text("With", fontWeight = FontWeight.Bold, color = Color(0xFF008080)) })
+            CenterAlignedTopAppBar(
+                title = {
+                    // 🆕 V8 终极修改：加入 Slogan 锚定心智模型，解决 P2/P3 的定位迷茫
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("With", fontWeight = FontWeight.Bold, color = Color(0xFF008080), fontSize = 18.sp)
+                        Text("您的数字健康共伴向导", fontSize = 10.sp, color = Color.Gray)
+                    }
+                }
+            )
         },
         bottomBar = {
             NavigationBar(containerColor = Color.White) {
@@ -394,9 +423,7 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
                 placeholder = { Text(dynamicPlaceholder, fontSize = 12.sp, color = Color.Gray) },
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(24.dp)
             )
-            IconButton(onClick = { scope.launch { snackbarHostState.showSnackbar("🎙️ 语音输入模块将在未来版本接入") } }) {
-                Icon(Icons.Default.Mic, contentDescription = "Voice", tint = Color.Gray)
-            }
+            IconButton(onClick = { scope.launch { snackbarHostState.showSnackbar("🎙️ 语音输入模块将在未来版本接入") } }) { Icon(Icons.Default.Mic, contentDescription = "Voice", tint = Color.Gray) }
             IconButton(onClick = {
                 if (inputText.isNotBlank()) {
                     val reply = reportViewModel.processChatInput(inputText)
