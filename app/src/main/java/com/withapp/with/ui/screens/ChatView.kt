@@ -26,9 +26,9 @@ fun ChatView(
     var inputText by remember { mutableStateOf("") }
 
     // Mock local chat history for UI demonstration
-    val chatHistory = remember { mutableStateListOf(
+    val chatHistory = remember { mutableStateListOf<ChatMessage>(
         ChatMessage("嗨，我在这里陪着你。你今天感觉怎么样？", isUser = false)
-    )}
+    ) }
 
     Scaffold(
         topBar = {
