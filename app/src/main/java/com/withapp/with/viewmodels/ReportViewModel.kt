@@ -1,4 +1,4 @@
-
+//
 //
 //package com.withapp.with.viewmodels
 //
@@ -30,7 +30,7 @@
 //    var age: String, var gender: String, var height: String, var weight: String,
 //    var diagnosisDate: String, var insulinUse: String, var medication: String,
 //    var targetRange: String, var hba1c: String, var reminderTime: String, var reminderFrequency: String,
-//    var isPrivacyMode: Boolean = false, var isContextAwareAlerts: Boolean = true
+//    var isPrivacyMode: Boolean = false, var isContextAwareAlerts: Boolean = true, var isVacationMode: Boolean = false
 //)
 //
 //class ReportViewModel : ViewModel() {
@@ -42,18 +42,17 @@
 //    val cgmNodes = mutableStateListOf<CgmNode>()
 //    val moodNodes = mutableStateListOf<MoodLog>()
 //
-//    // 🆕 V12：追踪最后一次操作，用于实现 Undo 算法撤销
 //    private var lastActionType = ""
 //
 //    var cgmReport = mutableStateOf(ClinicalCgmReport(
-//        deviceInfo = "With v12 (Masterpiece) | 3min/次", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
+//        deviceInfo = "With v15 (Final Archive) | 3min/次", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
 //        sd = "1.2", cv = "18.7% (<36%)", mage = "2.1", gmi = "6.1%", tirTarget = 92, tirHigh = 5, tirLow = 3,
 //        tbrLevel1 = "2%", tbrLevel2 = "1% (<3.0)", tarLevel1 = "4%", tarLevel2 = "1% (>13.9)",
 //        wearTime = "98%", completeness = "99.5%", signalLoss = "15 min", hypoEvents = 1, hyperEvents = 2, alertsTriggered = 3,
 //        clinicalAdvice = "今日血糖极佳，TIR 达标。趋势平稳，无需调整。"
 //    ))
 //    var moodReport = mutableStateOf(ClinicalMoodReport("7.5", "7.8", "0.9", "Low", 70, 20, 10, "2 (极轻)", "3 (极轻)", "12 (轻度)"))
-//    var userProfile = mutableStateOf(UserProfile("28 岁", "女", "175 cm", "70 kg", "2023/05", "是", "二甲双胍", "3.9 - 10.0", "6.2 %", "餐后30分", "每天3次", false, true))
+//    var userProfile = mutableStateOf(UserProfile("28 岁", "女", "175 cm", "70 kg", "2023/05", "是", "二甲双胍", "3.9 - 10.0", "6.2 %", "餐后30分", "每天3次", false, true, false))
 //
 //    init {
 //        cgmNodes.addAll(listOf(
@@ -88,7 +87,6 @@
 //        val inputCleaned = if (timeMatch != null) input.replace(timeMatch, "") else input
 //        val extractedNumber = Regex("(\\d+\\.\\d+|\\d+)").find(inputCleaned)?.value?.toFloatOrNull()
 //
-//        // 🆕 V12：意图消歧 (Conversational Disambiguation) - 彻底解决 P1 “输入身高不给反馈” 的核心痛点！
 //        if (Regex("身高|多高").containsMatchIn(inputCleaned)) {
 //            val h = extractedNumber?.toInt() ?: 175
 //            userProfile.value = userProfile.value.copy(height = "$h cm")
@@ -104,7 +102,16 @@
 //
 //        var matchedSomething = false
 //
-//        if (Regex("血糖|低血糖|高血糖|测了|mmol").containsMatchIn(inputCleaned)) { addCgmNode(extractedNumber?.toDouble() ?: 5.5, time); lastActionType = "cgm"; matchedSomething = true }
+//        // 🆕 V15 终极防呆机制：异常危急值预警拦截 (Poka-Yoke)
+//        if (Regex("血糖|低血糖|高血糖|测了|mmol").containsMatchIn(inputCleaned)) {
+//            val bgValue = extractedNumber?.toDouble() ?: 5.5
+//            if (bgValue > 15.0 || bgValue < 3.9) {
+//                addCgmNode(bgValue, time)
+//                lastActionType = "cgm"
+//                return "⚠️ 警报：检测到您的血糖值 ($bgValue mmol/L) 严重偏离目标范围。数据已暂存，但请务必立即关注身体状态，必要时请就医！(如果这是误输入，请点击下方撤销)"
+//            }
+//            addCgmNode(bgValue, time); lastActionType = "cgm"; matchedSomething = true
+//        }
 //        else if (Regex("胰岛素|打针|单位|U").containsMatchIn(inputCleaned)) { val units = extractedNumber ?: 2f; dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units)); lastActionType = "diet"; matchedSomething = true }
 //        else if (Regex("吃|餐|饭|饮食|碳水").containsMatchIn(inputCleaned)) { val carbs = extractedNumber ?: 40f; dietLogs.add(0, DietEntry(time, inputCleaned, "约 ${carbs}g", carbs)); lastActionType = "diet"; matchedSomething = true }
 //        else if (Regex("跑|步|运动|锻炼|健身|游泳|骑车").containsMatchIn(inputCleaned)) { val duration = extractedNumber ?: 30f; exerciseLogs.add(0, ExerciseEntry(time, inputCleaned, "${duration}min", duration)); lastActionType = "exercise"; matchedSomething = true }
@@ -121,11 +128,13 @@
 //            val customLabel = if (inputCleaned.length > 8) inputCleaned.substring(0, 8) + "..." else inputCleaned
 //            addMoodNode(score, if (score >= 8f) "极佳: $customLabel" else if (score <= 4f) "低落: $customLabel" else "平稳: $customLabel", time)
 //            lastActionType = "mood"
+//
+//            if (score <= 4f) { return "收到你的记录。看起来此刻有些艰难，请允许自己深呼吸三次 🌬️。无论发生什么，我都在这里陪你。你需要休息一下吗？" }
+//            else if (score >= 8f) { return "太棒了！🤩 记录已保存。能感觉到你现在充满了能量！愿意花一秒钟回想一下，今天是什么具体的事情让你这么开心吗？（这有助于巩固积极记忆哦）" }
 //        }
 //        return "🎉 记录成功！干得漂亮，每一次记录都是在为健康投资。数据已整理至『回顾』中。"
 //    }
 //
-//    // 🆕 V12：赋予用户撤销权 (Algorithmic Reversibility)
 //    fun undoLastAction(): String {
 //        when (lastActionType) {
 //            "cgm" -> if (cgmNodes.isNotEmpty()) cgmNodes.removeAt(cgmNodes.size - 1)
@@ -135,7 +144,7 @@
 //            "hr" -> if (hrLogs.isNotEmpty()) hrLogs.removeAt(0)
 //            else -> return "没有可以撤销的操作。"
 //        }
-//        lastActionType = "" // 撤销后清空状态
+//        lastActionType = ""
 //        return "↩️ 已成功撤销上一次的智能提取记录。"
 //    }
 //
@@ -161,20 +170,22 @@ data class ClinicalCgmReport(
     val sd: String, val cv: String, val mage: String, val gmi: String, val tirTarget: Int, val tirHigh: Int, val tirLow: Int,
     val tbrLevel1: String, val tbrLevel2: String, val tarLevel1: String, val tarLevel2: String,
     val wearTime: String, val completeness: String, val signalLoss: String, val hypoEvents: Int, val hyperEvents: Int, val alertsTriggered: Int,
-    val clinicalAdvice: String
+    val clinicalAdvice: String,
+    val ipsativeTrend: String = "波动率较上周同期下降 12%",
+    val feedforwardAction: String = "晚餐建议增加 15g 优质蛋白，这将有助于平抑您夜间的血糖波动。"
 )
 
 data class ClinicalMoodReport(
     val meanScore: String, val medianScore: String, val variabilitySD: String, val instabilityIndex: String,
-    val positiveAffect: Int, val neutralAffect: Int, val negativeAffect: Int, val phq9Score: String, val gad7Score: String, val pssScore: String
+    val positiveAffect: Int, val neutralAffect: Int, val negativeAffect: Int, val phq9Score: String, val gad7Score: String, val pssScore: String,
+    val ipsativeTrend: String = "情绪稳定性较上月提升 8%"
 )
 
 data class UserProfile(
     var age: String, var gender: String, var height: String, var weight: String,
     var diagnosisDate: String, var insulinUse: String, var medication: String,
     var targetRange: String, var hba1c: String, var reminderTime: String, var reminderFrequency: String,
-    var isPrivacyMode: Boolean = false, var isContextAwareAlerts: Boolean = true,
-    var isVacationMode: Boolean = false // 🆕 V13前沿理论：追踪疲劳的休眠模式
+    var isPrivacyMode: Boolean = false, var isContextAwareAlerts: Boolean = true, var isVacationMode: Boolean = false
 )
 
 class ReportViewModel : ViewModel() {
@@ -189,7 +200,7 @@ class ReportViewModel : ViewModel() {
     private var lastActionType = ""
 
     var cgmReport = mutableStateOf(ClinicalCgmReport(
-        deviceInfo = "With v13 (PhD Level) | 3min/次", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
+        deviceInfo = "With v16 Final | 3min/次", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
         sd = "1.2", cv = "18.7% (<36%)", mage = "2.1", gmi = "6.1%", tirTarget = 92, tirHigh = 5, tirLow = 3,
         tbrLevel1 = "2%", tbrLevel2 = "1% (<3.0)", tarLevel1 = "4%", tarLevel2 = "1% (>13.9)",
         wearTime = "98%", completeness = "99.5%", signalLoss = "15 min", hypoEvents = 1, hyperEvents = 2, alertsTriggered = 3,
@@ -246,7 +257,15 @@ class ReportViewModel : ViewModel() {
 
         var matchedSomething = false
 
-        if (Regex("血糖|低血糖|高血糖|测了|mmol").containsMatchIn(inputCleaned)) { addCgmNode(extractedNumber?.toDouble() ?: 5.5, time); lastActionType = "cgm"; matchedSomething = true }
+        if (Regex("血糖|低血糖|高血糖|测了|mmol").containsMatchIn(inputCleaned)) {
+            val bgValue = extractedNumber?.toDouble() ?: 5.5
+            if (bgValue > 15.0 || bgValue < 3.9) {
+                addCgmNode(bgValue, time)
+                lastActionType = "cgm"
+                return "⚠️ 警报：检测到您的血糖值 ($bgValue mmol/L) 严重偏离目标范围。数据已暂存，但请务必立即关注身体状态，必要时请就医！(误输入请点击下方撤销)"
+            }
+            addCgmNode(bgValue, time); lastActionType = "cgm"; matchedSomething = true
+        }
         else if (Regex("胰岛素|打针|单位|U").containsMatchIn(inputCleaned)) { val units = extractedNumber ?: 2f; dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units)); lastActionType = "diet"; matchedSomething = true }
         else if (Regex("吃|餐|饭|饮食|碳水").containsMatchIn(inputCleaned)) { val carbs = extractedNumber ?: 40f; dietLogs.add(0, DietEntry(time, inputCleaned, "约 ${carbs}g", carbs)); lastActionType = "diet"; matchedSomething = true }
         else if (Regex("跑|步|运动|锻炼|健身|游泳|骑车").containsMatchIn(inputCleaned)) { val duration = extractedNumber ?: 30f; exerciseLogs.add(0, ExerciseEntry(time, inputCleaned, "${duration}min", duration)); lastActionType = "exercise"; matchedSomething = true }
@@ -264,10 +283,8 @@ class ReportViewModel : ViewModel() {
             addMoodNode(score, if (score >= 8f) "极佳: $customLabel" else if (score <= 4f) "低落: $customLabel" else "平稳: $customLabel", time)
             lastActionType = "mood"
 
-            // 🆕 V13前沿理论：反思性摩擦 (Reflective Friction)。低落时给予深呼吸支持，取代冷冰冰的“存入数据库”。
-            if (score <= 4f) {
-                return "收到你的记录。看起来此刻有些艰难，请允许自己深呼吸三次 🌬️。无论发生什么，我都在这里陪你。你需要休息一下吗？"
-            }
+            if (score <= 4f) { return "收到你的记录。看起来此刻有些艰难，请允许自己深呼吸三次 🌬️。无论发生什么，我都在这里陪你。你需要休息一下吗？" }
+            else if (score >= 8f) { return "太棒了！🤩 记录已保存。能感觉到你现在充满了能量！愿意花一秒钟回想一下，今天是什么具体的事情让你这么开心吗？（这有助于巩固积极记忆哦）" }
         }
         return "🎉 记录成功！干得漂亮，每一次记录都是在为健康投资。数据已整理至『回顾』中。"
     }

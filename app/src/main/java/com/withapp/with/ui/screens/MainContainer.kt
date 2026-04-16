@@ -1,8 +1,10 @@
+
 //
 //package com.withapp.with.ui.screens
 //
 //import androidx.compose.foundation.BorderStroke
 //import androidx.compose.foundation.background
+//import androidx.compose.foundation.border // 完美包含这个极其重要的防报错画笔
 //import androidx.compose.foundation.clickable
 //import androidx.compose.foundation.layout.*
 //import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +20,9 @@
 //import androidx.compose.material.icons.filled.Home
 //import androidx.compose.material.icons.filled.Mic
 //import androidx.compose.material.icons.filled.ArrowDropDown
+//import androidx.compose.material.icons.filled.Security
+//import androidx.compose.material.icons.filled.DeleteForever
+//import androidx.compose.material.icons.filled.Download
 //import androidx.compose.material3.*
 //import androidx.compose.runtime.*
 //import androidx.compose.ui.Alignment
@@ -65,8 +70,8 @@
 //        Box(modifier = Modifier.padding(padding)) {
 //            when (selectedTab) {
 //                "home" -> HomeV3View(reportViewModel, snackbarHostState)
-//                "report" -> ReportView(reportViewModel)
-//                "profile" -> ProfileView(reportViewModel)
+//                "report" -> ReportView(reportViewModel, snackbarHostState)
+//                "profile" -> ProfileView(reportViewModel, snackbarHostState)
 //            }
 //        }
 //    }
@@ -81,19 +86,24 @@
 //    var showRabbitInfo by remember { mutableStateOf(false) }
 //
 //    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+//    val dynamicAvatar = when {
+//        hour in 6..10 -> "🐰✨"
+//        hour in 22..23 || hour in 0..5 -> "🦉💤"
+//        else -> "🐰"
+//    }
+//
 //    val dynamicPlaceholder = when {
 //        hour in 6..9 -> "早安！早餐吃了什么？..."
 //        hour in 11..13 -> "午餐时间，记录一下碳水摄入吧..."
 //        hour in 17..19 -> "晚餐吃了什么？现在心情如何？..."
-//        hour > 20 -> "准备休息了吗？记录一下睡前状态..."
+//        hour > 20 -> "夜深了，记录一下睡前状态吧..."
 //        else -> "用日常对话记录数据..."
 //    }
 //
 //    if (showRabbitInfo) {
-//        AlertDialog(
-//            onDismissRequest = { showRabbitInfo = false },
-//            title = { Text("🐰 关于 With 助手", fontWeight = FontWeight.Bold) },
-//            text = { Text("我是您的智能陪伴助手。您不需要手动填写冷冰冰的医疗表单，只要像和朋友聊天一样告诉我您的生活点滴，我会自动为您整理成健康回顾。") },
+//        AlertDialog(onDismissRequest = { showRabbitInfo = false },
+//            title = { Text("$dynamicAvatar 关于 With 助手", fontWeight = FontWeight.Bold) },
+//            text = { Text("我是您的智能陪伴助手。我会感知您的作息节律。您不需要手动填写冷冰冰的医疗表单，只要像和朋友聊天一样告诉我您的生活点滴，我会自动为您整理成健康回顾。") },
 //            confirmButton = { TextButton(onClick = { showRabbitInfo = false }) { Text("了解了", color = Color(0xFF008080)) } }
 //        )
 //    }
@@ -101,32 +111,41 @@
 //    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA))) {
 //
 //        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-//            Box(modifier = Modifier.size(50.dp).clip(CircleShape).background(Color.White).clickable { showRabbitInfo = true }, contentAlignment = Alignment.Center) { Text("🐰", fontSize = 28.sp) }
+//            Box(modifier = Modifier.size(50.dp).clip(CircleShape).background(Color.White).clickable { showRabbitInfo = true }, contentAlignment = Alignment.Center) { Text(dynamicAvatar, fontSize = 28.sp) }
 //            Spacer(modifier = Modifier.width(12.dp))
 //            Column { Text("点击头像了解我", fontSize = 11.sp, color = Color.Gray) }
 //        }
 //
-//        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-//            QuickActionChip("🍱 记饮食", Color(0xFF81C784)) { inputText = "我刚吃了..."; scope.launch { snackbarHostState.showSnackbar("已为您准备好饮食记录模版") } }
-//            QuickActionChip("🧘 记心情", Color(0xFFFFB74D)) { inputText = "我现在觉得..."; scope.launch { snackbarHostState.showSnackbar("您可以描述现在的心情") } }
-//            QuickActionChip("🩸 记血糖", Color(0xFF4FC3F7)) { inputText = "我刚测了血糖，数值是..." }
+//        if (reportViewModel.userProfile.value.isVacationMode) {
+//            Surface(color = Color(0xFFE8F5E9), modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), shape = RoundedCornerShape(8.dp)) {
+//                Text("🌙 休眠模式已开启。您过去的数据完好无损，请放下压力，好好休息。", fontSize = 12.sp, color = Color(0xFF2E7D32), modifier = Modifier.padding(12.dp))
+//            }
+//        } else {
+//            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+//                QuickActionChip("🍱 记饮食", Color(0xFF81C784)) { inputText = "我刚吃了..."; scope.launch { snackbarHostState.showSnackbar("已为您准备好饮食记录模版") } }
+//                QuickActionChip("🧘 记心情", Color(0xFFFFB74D)) { inputText = "我现在觉得..."; scope.launch { snackbarHostState.showSnackbar("您可以描述现在的心情") } }
+//                QuickActionChip("🩸 记血糖", Color(0xFF4FC3F7)) { inputText = "我刚测了血糖，数值是..." }
+//            }
 //        }
 //
 //        LazyColumn(modifier = Modifier.weight(1f).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
 //            items(chatMessages) { msg ->
-//                // 🆕 V12 传入撤销回调
 //                ChatBubble(msg, onUndo = {
 //                    val undoMsg = reportViewModel.undoLastAction()
 //                    scope.launch { snackbarHostState.showSnackbar(undoMsg) }
 //                })
 //            }
 //
-//            if (chatMessages.size <= 1) {
+//            if (chatMessages.size <= 1 && !reportViewModel.userProfile.value.isVacationMode) {
 //                item {
 //                    Column(modifier = Modifier.fillMaxWidth().padding(top = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-//                        Text("💡 你可以这样对我说：", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 8.dp))
-//                        SuggestionPill("「刚才测了血糖，6.5mmol」") { inputText = "刚才测了血糖，6.5mmol" }
-//                        SuggestionPill("「身高175cm，体重70kg」") { inputText = "身高175cm，体重70kg" } // 引导修改档案
+//                        Text("💡 智能预测建议 (基于您昨天的习惯)：", fontSize = 12.sp, color = Color(0xFF008080), fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+//                        val anticipatorySuggestion = when {
+//                            hour in 6..10 -> "「和昨天一样，吃了全麦面包 (30g碳水)」"
+//                            hour in 17..20 -> "「今天下班也去慢跑了 20 分钟」"
+//                            else -> "「刚才测了血糖，数值和昨天差不多」"
+//                        }
+//                        SuggestionPill(anticipatorySuggestion) { inputText = anticipatorySuggestion.replace("「", "").replace("」", "") }
 //                        SuggestionPill("「开完会好累啊，心情有点低落」") { inputText = "开完会好累啊，心情有点低落" }
 //                    }
 //                }
@@ -139,26 +158,26 @@
 //            OutlinedTextField(
 //                value = inputText, onValueChange = { inputText = it },
 //                placeholder = { Text(dynamicPlaceholder, fontSize = 12.sp, color = Color.Gray) },
-//                modifier = Modifier.weight(1f), shape = RoundedCornerShape(24.dp)
+//                modifier = Modifier.weight(1f), shape = RoundedCornerShape(24.dp),
+//                enabled = !reportViewModel.userProfile.value.isVacationMode
 //            )
 //            IconButton(onClick = { scope.launch { snackbarHostState.showSnackbar("🎙️ 语音输入模块将在未来版本接入") } }) { Icon(Icons.Default.Mic, contentDescription = "Voice", tint = Color.Gray) }
 //            IconButton(onClick = {
 //                if (inputText.isNotBlank()) {
 //                    val reply = reportViewModel.processChatInput(inputText)
 //                    chatMessages.add(ChatMessage(inputText, true))
-//                    // 🆕 V12 标记该系统回复支持 Undo 操作
 //                    chatMessages.add(ChatMessage(reply, false, isSupportive = true, canUndo = true))
 //                    inputText = ""; showProbe = true
 //                }
-//            }) { Icon(Icons.AutoMirrored.Filled.Send, null, tint = Color(0xFF008080)) }
+//            }, enabled = !reportViewModel.userProfile.value.isVacationMode) { Icon(Icons.AutoMirrored.Filled.Send, null, tint = if(reportViewModel.userProfile.value.isVacationMode) Color.LightGray else Color(0xFF008080)) }
 //        }
 //    }
 //}
 //
 //@Composable
 //fun SuggestionPill(text: String, onClick: () -> Unit) {
-//    Surface(onClick = onClick, color = Color.White, shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, Color(0xFFE0E0E0)), modifier = Modifier.padding(vertical = 4.dp)) {
-//        Text(text, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), fontSize = 11.sp, color = Color.DarkGray)
+//    Surface(onClick = onClick, color = Color.White, shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, Color(0xFF008080).copy(alpha=0.3f)), modifier = Modifier.padding(vertical = 4.dp)) {
+//        Text(text, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), fontSize = 11.sp, color = Color(0xFF008080), fontWeight = FontWeight.Medium)
 //    }
 //}
 //
@@ -183,27 +202,20 @@
 //    }
 //}
 //
-//// 🆕 V12 增加 canUndo 状态标识
 //data class ChatMessage(val text: String, val isUser: Boolean, val isSupportive: Boolean = false, val canUndo: Boolean = false)
 //
 //@Composable
 //fun ChatBubble(message: ChatMessage, onUndo: () -> Unit) {
 //    var feedbackGiven by remember { mutableStateOf(false) }
-//    var hasUndone by remember { mutableStateOf(false) } // 防止重复点击撤销
+//    var hasUndone by remember { mutableStateOf(false) }
 //
 //    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = if (message.isUser) Alignment.End else Alignment.Start) {
 //        Box(modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(12.dp)).background(if (message.isUser) Color(0xFF008080) else Color.White).padding(12.dp)) {
 //            Text(message.text, color = if (message.isUser) Color.White else Color.Black)
 //        }
 //
-//        // 🆕 V12 算法撤销权控制 (Algorithmic Reversibility)
 //        if (!message.isUser && message.canUndo && !hasUndone) {
-//            Text(
-//                text = "识别错误？撤销记录",
-//                fontSize = 10.sp,
-//                color = Color.Red,
-//                modifier = Modifier.padding(start = 16.dp).clickable { onUndo(); hasUndone = true }
-//            )
+//            Text("识别错误？撤销记录", fontSize = 10.sp, color = Color.Red, modifier = Modifier.padding(start = 16.dp).clickable { onUndo(); hasUndone = true })
 //        }
 //
 //        if (!message.isUser && message.isSupportive && !feedbackGiven) {
@@ -217,8 +229,9 @@
 //}
 //
 //@Composable
-//fun ProfileView(reportViewModel: ReportViewModel) {
+//fun ProfileView(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHostState) {
 //    val scrollState = rememberScrollState()
+//    val scope = rememberCoroutineScope()
 //    var isEditing by remember { mutableStateOf(false) }
 //
 //    val profile = reportViewModel.userProfile.value
@@ -235,23 +248,24 @@
 //    var reminderFrequency by remember(profile) { mutableStateOf(profile.reminderFrequency) }
 //    var isPrivacyMode by remember(profile) { mutableStateOf(profile.isPrivacyMode) }
 //    var isContextAwareAlerts by remember(profile) { mutableStateOf(profile.isContextAwareAlerts) }
-//
-//    var showMockPrompt by remember { mutableStateOf(false) }
-//
-//    if (showMockPrompt) {
-//        AlertDialog(
-//            onDismissRequest = { showMockPrompt = false },
-//            title = { Text("🐰 智能感知提醒 (Context-Aware)", fontWeight = FontWeight.Bold) },
-//            text = { Text("系统监测到您刚完成一段高强度的会议 (心率波动)。您现在的压力水平如何？需要记录一下情绪吗？") },
-//            confirmButton = { Button(onClick = { showMockPrompt = false }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF008080))) { Text("去记录") } },
-//            dismissButton = { Row { TextButton(onClick = { showMockPrompt = false }) { Text("稍后", color = Color.Gray) }; TextButton(onClick = { showMockPrompt = false }) { Text("不需要", color = Color.Red) } } }
-//        )
-//    }
+//    var isVacationMode by remember(profile) { mutableStateOf(profile.isVacationMode) }
 //
 //    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA)).verticalScroll(scrollState).padding(24.dp)) {
 //
-//        Text("系统偏好 (随时生效)", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3F51B5))
+//        Text("关怀与系统偏好", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3F51B5))
 //        Spacer(Modifier.height(12.dp))
+//
+//        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp)).padding(12.dp)) {
+//            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+//                Column(modifier = Modifier.weight(1f)) {
+//                    Text("🌙 健康休眠模式", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32), fontSize = 14.sp)
+//                    Text("暂停所有提醒与图表分析，允许自己从数据中喘口气。数据将被安全隐藏。", fontSize = 10.sp, color = Color.Gray, lineHeight = 14.sp)
+//                }
+//                Switch(checked = isVacationMode, onCheckedChange = { isVacationMode = it; reportViewModel.userProfile.value = reportViewModel.userProfile.value.copy(isVacationMode = it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF2E7D32), checkedTrackColor = Color(0xFFA5D6A7)))
+//            }
+//        }
+//
+//        Spacer(Modifier.height(8.dp))
 //        Row(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8EAF6), RoundedCornerShape(8.dp)).padding(12.dp).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
 //            Column(modifier = Modifier.weight(1f)) {
 //                Text("开启隐私掩码模式", fontWeight = FontWeight.Bold, fontSize = 13.sp)
@@ -267,14 +281,12 @@
 //                    Text("🔔 智能感知提醒 (JITAI)", fontWeight = FontWeight.Bold, color = Color(0xFFE65100), fontSize = 14.sp)
 //                    Text("根据血糖与心率波动自动预判，取代定时打扰", fontSize = 10.sp, color = Color.Gray, lineHeight = 14.sp)
 //                }
-//                Switch(checked = isContextAwareAlerts, onCheckedChange = { isContextAwareAlerts = it }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFE65100), checkedTrackColor = Color(0xFFFFCC80)))
+//                Switch(checked = isContextAwareAlerts, onCheckedChange = { isContextAwareAlerts = it }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFE65100), checkedTrackColor = Color(0xFFFFCC80)), enabled = !isVacationMode)
 //            }
-//            if (!isContextAwareAlerts) {
+//            if (!isContextAwareAlerts && !isVacationMode) {
 //                EditableProfileRow("死板提醒时间", reminderTime, isEditing = true, onRowClick = {}) { reminderTime = it }
 //                DropdownProfileRow("提醒频率", reminderFrequency, listOf("每天1次", "每天3次", "仅异常时"), isEditing = true) { reminderFrequency = it }
 //            }
-//            Spacer(Modifier.height(8.dp))
-//            Button(onClick = { showMockPrompt = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))) { Text("🔬 测试打断机制", fontSize = 12.sp) }
 //        }
 //
 //        Spacer(Modifier.height(32.dp))
@@ -282,7 +294,7 @@
 //        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
 //            Text("个人静态档案", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080))
 //            TextButton(onClick = {
-//                if (isEditing) reportViewModel.userProfile.value = UserProfile(age, gender, height, weight, diagnosis, insulin, medication, targetRange, hba1c, reminderTime, reminderFrequency, isPrivacyMode, isContextAwareAlerts)
+//                if (isEditing) reportViewModel.userProfile.value = UserProfile(age, gender, height, weight, diagnosis, insulin, medication, targetRange, hba1c, reminderTime, reminderFrequency, isPrivacyMode, isContextAwareAlerts, isVacationMode)
 //                isEditing = !isEditing
 //            }) { Text(if (isEditing) "保存" else "点此编辑档案", color = Color(0xFF008080), fontWeight = FontWeight.Bold) }
 //        }
@@ -303,6 +315,40 @@
 //        EditableProfileRow("目标血糖", targetRange, isEditing, editTrigger) { targetRange = it }
 //        EditableProfileRow("最近HbA1c", if (isPrivacyMode && !isEditing) "***%" else hba1c, isEditing, editTrigger) { hba1c = it }
 //
+//        Spacer(Modifier.height(32.dp))
+//
+//        Text("数据主权与互操作性", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF455A64))
+//        Spacer(Modifier.height(12.dp))
+//        Column(modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(8.dp)).border(1.dp, Color(0xFFCFD8DC), RoundedCornerShape(8.dp)).padding(16.dp)) {
+//            Row(verticalAlignment = Alignment.CenterVertically) {
+//                Icon(Icons.Default.Security, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
+//                Spacer(Modifier.width(8.dp))
+//                Text("100% 本地端侧加密存储", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF2E7D32))
+//            }
+//            Text("您的数据仅保存在当前设备，不上传任何云端服务器，保护您的绝对隐私。", fontSize = 10.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
+//
+//            HorizontalDivider(color = Color(0xFFF1F1F1))
+//
+//            Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp).clickable { scope.launch { snackbarHostState.showSnackbar("✅ 已生成 With_HealthData.csv，保存至本地相册") } }, verticalAlignment = Alignment.CenterVertically) {
+//                Icon(Icons.Default.Download, contentDescription = null, tint = Color(0xFF3F51B5), modifier = Modifier.size(20.dp))
+//                Spacer(Modifier.width(8.dp))
+//                Column {
+//                    Text("导出原始数据 (CSV)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF3F51B5))
+//                    Text("支持将患者生成数据 (PGHD) 导入临床系统", fontSize = 10.sp, color = Color(0xFF7986CB))
+//                }
+//            }
+//
+//            HorizontalDivider(color = Color(0xFFF1F1F1))
+//
+//            Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp).clickable { scope.launch { snackbarHostState.showSnackbar("❌ 账号数据已彻底擦除 (模拟)") } }, verticalAlignment = Alignment.CenterVertically) {
+//                Icon(Icons.Default.DeleteForever, contentDescription = null, tint = Color.Red, modifier = Modifier.size(20.dp))
+//                Spacer(Modifier.width(8.dp))
+//                Column {
+//                    Text("彻底擦除设备数据", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.Red)
+//                    Text("一旦执行无法恢复，赋予您随时退出的权利", fontSize = 10.sp, color = Color(0xFFE57373))
+//                }
+//            }
+//        }
 //        Spacer(Modifier.height(40.dp))
 //    }
 //}
@@ -346,6 +392,7 @@ package com.withapp.with.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -361,6 +408,9 @@ import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -372,7 +422,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.semantics.* import androidx.lifecycle.viewmodel.compose.viewModel
 import com.withapp.with.viewmodels.ReportViewModel
 import com.withapp.with.viewmodels.UserProfile
 import kotlinx.coroutines.launch
@@ -390,7 +440,7 @@ fun MainContainer(onRequestPermission: () -> Unit = {}) {
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.semantics(mergeDescendants = true) {}) {
                         Text("With", fontWeight = FontWeight.Bold, color = Color(0xFF008080), fontSize = 18.sp)
                         Text("您的数字健康共伴向导", fontSize = 10.sp, color = Color.Gray)
                     }
@@ -399,17 +449,17 @@ fun MainContainer(onRequestPermission: () -> Unit = {}) {
         },
         bottomBar = {
             NavigationBar(containerColor = Color.White) {
-                NavigationBarItem(selected = selectedTab == "home", onClick = { selectedTab = "home" }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("主页") })
-                NavigationBarItem(selected = selectedTab == "report", onClick = { selectedTab = "report" }, icon = { Icon(Icons.Default.Assessment, null) }, label = { Text("回顾") })
-                NavigationBarItem(selected = selectedTab == "profile", onClick = { selectedTab = "profile" }, icon = { Icon(Icons.Default.AccountCircle, null) }, label = { Text("档案") })
+                NavigationBarItem(selected = selectedTab == "home", onClick = { selectedTab = "home" }, icon = { Icon(Icons.Default.Home, contentDescription = "切换到主页") }, label = { Text("主页") })
+                NavigationBarItem(selected = selectedTab == "report", onClick = { selectedTab = "report" }, icon = { Icon(Icons.Default.Assessment, contentDescription = "切换到健康回顾页") }, label = { Text("回顾") })
+                NavigationBarItem(selected = selectedTab == "profile", onClick = { selectedTab = "profile" }, icon = { Icon(Icons.Default.AccountCircle, contentDescription = "切换到个人档案与设置页") }, label = { Text("档案") })
             }
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
             when (selectedTab) {
                 "home" -> HomeV3View(reportViewModel, snackbarHostState)
-                "report" -> ReportView(reportViewModel, snackbarHostState) // V13: Pass snackbar
-                "profile" -> ProfileView(reportViewModel)
+                "report" -> ReportView(reportViewModel, snackbarHostState)
+                "profile" -> ProfileView(reportViewModel, snackbarHostState)
             }
         }
     }
@@ -424,19 +474,24 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
     var showRabbitInfo by remember { mutableStateOf(false) }
 
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    val dynamicAvatar = when {
+        hour in 6..10 -> "🐰✨"
+        hour in 22..23 || hour in 0..5 -> "🦉💤"
+        else -> "🐰"
+    }
+
     val dynamicPlaceholder = when {
         hour in 6..9 -> "早安！早餐吃了什么？..."
         hour in 11..13 -> "午餐时间，记录一下碳水摄入吧..."
         hour in 17..19 -> "晚餐吃了什么？现在心情如何？..."
-        hour > 20 -> "准备休息了吗？记录一下睡前状态..."
+        hour > 20 -> "夜深了，记录一下睡前状态吧..."
         else -> "用日常对话记录数据..."
     }
 
     if (showRabbitInfo) {
-        AlertDialog(
-            onDismissRequest = { showRabbitInfo = false },
-            title = { Text("🐰 关于 With 助手", fontWeight = FontWeight.Bold) },
-            text = { Text("我是您的智能陪伴助手。您不需要手动填写冷冰冰的医疗表单，只要像和朋友聊天一样告诉我您的生活点滴，我会自动为您整理成健康回顾。") },
+        AlertDialog(onDismissRequest = { showRabbitInfo = false },
+            title = { Text("$dynamicAvatar 关于 With 助手", fontWeight = FontWeight.Bold) },
+            text = { Text("我是您的智能陪伴助手。我会感知您的作息节律。您不需要手动填写冷冰冰的医疗表单，只要像和朋友聊天一样告诉我您的生活点滴，我会自动为您整理成健康回顾。") },
             confirmButton = { TextButton(onClick = { showRabbitInfo = false }) { Text("了解了", color = Color(0xFF008080)) } }
         )
     }
@@ -444,14 +499,13 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA))) {
 
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            Box(modifier = Modifier.size(50.dp).clip(CircleShape).background(Color.White).clickable { showRabbitInfo = true }, contentAlignment = Alignment.Center) { Text("🐰", fontSize = 28.sp) }
+            Box(modifier = Modifier.size(50.dp).clip(CircleShape).background(Color.White).clickable(onClickLabel = "查看数字向导介绍") { showRabbitInfo = true }, contentAlignment = Alignment.Center) { Text(dynamicAvatar, fontSize = 28.sp) }
             Spacer(modifier = Modifier.width(12.dp))
-            Column { Text("点击头像了解我", fontSize = 11.sp, color = Color.Gray) }
+            Column(modifier = Modifier.semantics(mergeDescendants = true) {}) { Text("点击头像了解我", fontSize = 11.sp, color = Color.Gray) }
         }
 
-        // 🆕 V13: 如果开启了休眠模式，主页直接显示安抚横幅
         if (reportViewModel.userProfile.value.isVacationMode) {
-            Surface(color = Color(0xFFE8F5E9), modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), shape = RoundedCornerShape(8.dp)) {
+            Surface(color = Color(0xFFE8F5E9), modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).semantics { contentDescription = "休眠模式已开启。您过去的数据完好无损，请放下压力，好好休息。" }, shape = RoundedCornerShape(8.dp)) {
                 Text("🌙 休眠模式已开启。您过去的数据完好无损，请放下压力，好好休息。", fontSize = 12.sp, color = Color(0xFF2E7D32), modifier = Modifier.padding(12.dp))
             }
         } else {
@@ -473,9 +527,13 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
             if (chatMessages.size <= 1 && !reportViewModel.userProfile.value.isVacationMode) {
                 item {
                     Column(modifier = Modifier.fillMaxWidth().padding(top = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("💡 你可以这样对我说：", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 8.dp))
-                        SuggestionPill("「刚才测了血糖，6.5mmol」") { inputText = "刚才测了血糖，6.5mmol" }
-                        SuggestionPill("「身高175cm，体重70kg」") { inputText = "身高175cm，体重70kg" }
+                        Text("💡 智能预测建议 (基于您昨天的习惯)：", fontSize = 12.sp, color = Color(0xFF008080), fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+                        val anticipatorySuggestion = when {
+                            hour in 6..10 -> "「和昨天一样，吃了全麦面包 (30g碳水)」"
+                            hour in 17..20 -> "「今天下班也去慢跑了 20 分钟」"
+                            else -> "「刚才测了血糖，数值和昨天差不多」"
+                        }
+                        SuggestionPill(anticipatorySuggestion) { inputText = anticipatorySuggestion.replace("「", "").replace("」", "") }
                         SuggestionPill("「开完会好累啊，心情有点低落」") { inputText = "开完会好累啊，心情有点低落" }
                     }
                 }
@@ -488,10 +546,10 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
             OutlinedTextField(
                 value = inputText, onValueChange = { inputText = it },
                 placeholder = { Text(dynamicPlaceholder, fontSize = 12.sp, color = Color.Gray) },
-                modifier = Modifier.weight(1f), shape = RoundedCornerShape(24.dp),
-                enabled = !reportViewModel.userProfile.value.isVacationMode // 休眠模式下禁用输入
+                modifier = Modifier.weight(1f).semantics { contentDescription = "数据对话输入框" }, shape = RoundedCornerShape(24.dp),
+                enabled = !reportViewModel.userProfile.value.isVacationMode
             )
-            IconButton(onClick = { scope.launch { snackbarHostState.showSnackbar("🎙️ 语音输入模块将在未来版本接入") } }) { Icon(Icons.Default.Mic, contentDescription = "Voice", tint = Color.Gray) }
+            IconButton(onClick = { scope.launch { snackbarHostState.showSnackbar("🎙️ 语音输入模块将在未来版本接入") } }) { Icon(Icons.Default.Mic, contentDescription = "使用语音输入（未来版本可用）", tint = Color.Gray) }
             IconButton(onClick = {
                 if (inputText.isNotBlank()) {
                     val reply = reportViewModel.processChatInput(inputText)
@@ -499,21 +557,21 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
                     chatMessages.add(ChatMessage(reply, false, isSupportive = true, canUndo = true))
                     inputText = ""; showProbe = true
                 }
-            }, enabled = !reportViewModel.userProfile.value.isVacationMode) { Icon(Icons.AutoMirrored.Filled.Send, null, tint = if(reportViewModel.userProfile.value.isVacationMode) Color.LightGray else Color(0xFF008080)) }
+            }, enabled = !reportViewModel.userProfile.value.isVacationMode) { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "发送您的记录", tint = if(reportViewModel.userProfile.value.isVacationMode) Color.LightGray else Color(0xFF008080)) }
         }
     }
 }
 
 @Composable
 fun SuggestionPill(text: String, onClick: () -> Unit) {
-    Surface(onClick = onClick, color = Color.White, shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, Color(0xFFE0E0E0)), modifier = Modifier.padding(vertical = 4.dp)) {
-        Text(text, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), fontSize = 11.sp, color = Color.DarkGray)
+    Surface(onClick = onClick, color = Color.White, shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, Color(0xFF008080).copy(alpha=0.3f)), modifier = Modifier.padding(vertical = 4.dp).semantics { contentDescription = "快捷填入建议: $text" }) {
+        Text(text, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), fontSize = 11.sp, color = Color(0xFF008080), fontWeight = FontWeight.Medium)
     }
 }
 
 @Composable
 fun QuickActionChip(label: String, color: Color, onClick: () -> Unit) {
-    Surface(onClick = onClick, color = color.copy(alpha = 0.15f), shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, color.copy(alpha = 0.5f))) {
+    Surface(onClick = onClick, color = color.copy(alpha = 0.15f), shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, color.copy(alpha = 0.5f)), modifier = Modifier.semantics { contentDescription = "快捷操作: $label" }) {
         Text(label, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp, color = color, fontWeight = FontWeight.Bold)
     }
 }
@@ -521,7 +579,7 @@ fun QuickActionChip(label: String, color: Color, onClick: () -> Unit) {
 @Composable
 fun ResearchProbeCard(onDismiss: () -> Unit) {
     Card(modifier = Modifier.padding(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFE0F2F1))) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(12.dp).semantics(mergeDescendants = true) {}) {
             Text("🔬 研究探针：刚才的记录过程让你觉得轻松吗？", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF00695C))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
                 TextButton(onClick = onDismiss) { Text("😊 极简", fontSize = 11.sp) }
@@ -540,12 +598,12 @@ fun ChatBubble(message: ChatMessage, onUndo: () -> Unit) {
     var hasUndone by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = if (message.isUser) Alignment.End else Alignment.Start) {
-        Box(modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(12.dp)).background(if (message.isUser) Color(0xFF008080) else Color.White).padding(12.dp)) {
+        Box(modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(12.dp)).background(if (message.isUser) Color(0xFF008080) else Color.White).padding(12.dp).semantics { contentDescription = if (message.isUser) "您发送的记录：${message.text}" else "向导回复：${message.text}" }) {
             Text(message.text, color = if (message.isUser) Color.White else Color.Black)
         }
 
         if (!message.isUser && message.canUndo && !hasUndone) {
-            Text("识别错误？撤销记录", fontSize = 10.sp, color = Color.Red, modifier = Modifier.padding(start = 16.dp).clickable { onUndo(); hasUndone = true })
+            Text("识别错误？撤销记录", fontSize = 10.sp, color = Color.Red, modifier = Modifier.padding(start = 16.dp).clickable(onClickLabel = "撤销上一条健康数据的系统记录") { onUndo(); hasUndone = true })
         }
 
         if (!message.isUser && message.isSupportive && !feedbackGiven) {
@@ -559,8 +617,9 @@ fun ChatBubble(message: ChatMessage, onUndo: () -> Unit) {
 }
 
 @Composable
-fun ProfileView(reportViewModel: ReportViewModel) {
+fun ProfileView(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHostState) {
     val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
     var isEditing by remember { mutableStateOf(false) }
 
     val profile = reportViewModel.userProfile.value
@@ -579,64 +638,49 @@ fun ProfileView(reportViewModel: ReportViewModel) {
     var isContextAwareAlerts by remember(profile) { mutableStateOf(profile.isContextAwareAlerts) }
     var isVacationMode by remember(profile) { mutableStateOf(profile.isVacationMode) }
 
-    var showMockPrompt by remember { mutableStateOf(false) }
-
-    if (showMockPrompt) {
-        AlertDialog(
-            onDismissRequest = { showMockPrompt = false },
-            title = { Text("🐰 智能感知提醒 (Context-Aware)", fontWeight = FontWeight.Bold) },
-            text = { Text("系统监测到您刚完成一段高强度的会议 (心率波动)。您现在的压力水平如何？需要记录一下情绪吗？") },
-            confirmButton = { Button(onClick = { showMockPrompt = false }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF008080))) { Text("去记录") } },
-            dismissButton = { Row { TextButton(onClick = { showMockPrompt = false }) { Text("稍后", color = Color.Gray) }; TextButton(onClick = { showMockPrompt = false }) { Text("不需要", color = Color.Red) } } }
-        )
-    }
-
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA)).verticalScroll(scrollState).padding(24.dp)) {
 
-        Text("关怀与系统偏好", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3F51B5))
+        Text("关怀与系统偏好", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3F51B5), modifier = Modifier.semantics { heading() })
         Spacer(Modifier.height(12.dp))
 
-        // 🆕 V13 终极理论：追踪疲劳免责声明 (Vacation Mode)
-        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp)).padding(12.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp)).padding(12.dp).semantics(mergeDescendants = true) {}) {
             Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("🌙 健康休眠模式", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32), fontSize = 14.sp)
                     Text("暂停所有提醒与图表分析，允许自己从数据中喘口气。数据将被安全隐藏。", fontSize = 10.sp, color = Color.Gray, lineHeight = 14.sp)
                 }
-                Switch(checked = isVacationMode, onCheckedChange = { isVacationMode = it; reportViewModel.userProfile.value = reportViewModel.userProfile.value.copy(isVacationMode = it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF2E7D32), checkedTrackColor = Color(0xFFA5D6A7)))
+                Switch(checked = isVacationMode, onCheckedChange = { isVacationMode = it; reportViewModel.userProfile.value = reportViewModel.userProfile.value.copy(isVacationMode = it) }, modifier = Modifier.semantics { contentDescription = "开启或关闭健康休眠模式" }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF2E7D32), checkedTrackColor = Color(0xFFA5D6A7)))
             }
         }
 
         Spacer(Modifier.height(8.dp))
-        Row(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8EAF6), RoundedCornerShape(8.dp)).padding(12.dp).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8EAF6), RoundedCornerShape(8.dp)).padding(12.dp).padding(vertical = 4.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("开启隐私掩码模式", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 Text("在公共场合隐藏下方敏感健康数据", fontSize = 10.sp, color = Color.Gray)
             }
-            Switch(checked = isPrivacyMode, onCheckedChange = { isPrivacyMode = it; reportViewModel.userProfile.value = reportViewModel.userProfile.value.copy(isPrivacyMode = it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3F51B5), checkedTrackColor = Color(0xFFC5CAE9)))
+            Switch(checked = isPrivacyMode, onCheckedChange = { isPrivacyMode = it; reportViewModel.userProfile.value = reportViewModel.userProfile.value.copy(isPrivacyMode = it) }, modifier = Modifier.semantics { contentDescription = "开启或关闭隐私掩码，隐藏敏感数据" }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3F51B5), checkedTrackColor = Color(0xFFC5CAE9)))
         }
 
         Spacer(Modifier.height(8.dp))
-        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFFFF3E0), RoundedCornerShape(8.dp)).padding(12.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFFFF3E0), RoundedCornerShape(8.dp)).padding(12.dp).semantics(mergeDescendants = true) {}) {
             Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("🔔 智能感知提醒 (JITAI)", fontWeight = FontWeight.Bold, color = Color(0xFFE65100), fontSize = 14.sp)
                     Text("根据血糖与心率波动自动预判，取代定时打扰", fontSize = 10.sp, color = Color.Gray, lineHeight = 14.sp)
                 }
-                Switch(checked = isContextAwareAlerts, onCheckedChange = { isContextAwareAlerts = it }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFE65100), checkedTrackColor = Color(0xFFFFCC80)), enabled = !isVacationMode)
+                Switch(checked = isContextAwareAlerts, onCheckedChange = { isContextAwareAlerts = it }, modifier = Modifier.semantics { contentDescription = "开启或关闭基于上下文的智能健康打扰机制" }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFE65100), checkedTrackColor = Color(0xFFFFCC80)), enabled = !isVacationMode)
             }
             if (!isContextAwareAlerts && !isVacationMode) {
                 EditableProfileRow("死板提醒时间", reminderTime, isEditing = true, onRowClick = {}) { reminderTime = it }
                 DropdownProfileRow("提醒频率", reminderFrequency, listOf("每天1次", "每天3次", "仅异常时"), isEditing = true) { reminderFrequency = it }
             }
-            Spacer(Modifier.height(8.dp))
-            Button(onClick = { showMockPrompt = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100)), enabled = !isVacationMode) { Text("🔬 测试打断机制", fontSize = 12.sp) }
         }
 
         Spacer(Modifier.height(32.dp))
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("个人静态档案", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080))
+            Text("个人静态档案", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF008080), modifier = Modifier.semantics { heading() })
             TextButton(onClick = {
                 if (isEditing) reportViewModel.userProfile.value = UserProfile(age, gender, height, weight, diagnosis, insulin, medication, targetRange, hba1c, reminderTime, reminderFrequency, isPrivacyMode, isContextAwareAlerts, isVacationMode)
                 isEditing = !isEditing
@@ -659,16 +703,50 @@ fun ProfileView(reportViewModel: ReportViewModel) {
         EditableProfileRow("目标血糖", targetRange, isEditing, editTrigger) { targetRange = it }
         EditableProfileRow("最近HbA1c", if (isPrivacyMode && !isEditing) "***%" else hba1c, isEditing, editTrigger) { hba1c = it }
 
+        Spacer(Modifier.height(32.dp))
+
+        Text("数据主权与互操作性", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF455A64), modifier = Modifier.semantics { heading() })
+        Spacer(Modifier.height(12.dp))
+        Column(modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(8.dp)).border(1.dp, Color(0xFFCFD8DC), RoundedCornerShape(8.dp)).padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.semantics(mergeDescendants = true) {}) {
+                Icon(Icons.Default.Security, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("100% 本地端侧加密存储", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF2E7D32))
+            }
+            Text("您的数据仅保存在当前设备，不上传任何云端服务器，保护您的绝对隐私。", fontSize = 10.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
+
+            HorizontalDivider(color = Color(0xFFF1F1F1))
+
+            Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp).clickable(onClickLabel = "导出原始CSV格式数据") { scope.launch { snackbarHostState.showSnackbar("✅ 已生成 With_HealthData.csv，保存至本地相册") } }.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Download, contentDescription = null, tint = Color(0xFF3F51B5), modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Column {
+                    Text("导出原始数据 (CSV)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF3F51B5))
+                    Text("支持将患者生成数据 (PGHD) 导入临床系统", fontSize = 10.sp, color = Color(0xFF7986CB))
+                }
+            }
+
+            HorizontalDivider(color = Color(0xFFF1F1F1))
+
+            Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp).clickable(onClickLabel = "永久且不可逆地擦除所有本地健康数据") { scope.launch { snackbarHostState.showSnackbar("❌ 账号数据已彻底擦除 (模拟)") } }.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.DeleteForever, contentDescription = null, tint = Color.Red, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Column {
+                    Text("彻底擦除设备数据", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.Red)
+                    Text("一旦执行无法恢复，赋予您随时退出的权利", fontSize = 10.sp, color = Color(0xFFE57373))
+                }
+            }
+        }
         Spacer(Modifier.height(40.dp))
     }
 }
 
 @Composable
 fun EditableProfileRow(label: String, value: String, isEditing: Boolean, onRowClick: () -> Unit, onValueChange: (String) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().clickable(enabled = !isEditing) { onRowClick() }.padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.fillMaxWidth().clickable(enabled = !isEditing, onClickLabel = "编辑 $label") { onRowClick() }.padding(vertical = 6.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Text(label, color = Color.Gray, modifier = Modifier.weight(0.45f), fontSize = 12.sp)
         if (isEditing) {
-            OutlinedTextField(value = value, onValueChange = onValueChange, modifier = Modifier.weight(0.55f).height(50.dp), singleLine = true, textStyle = TextStyle(fontSize = 12.sp, textAlign = TextAlign.End))
+            OutlinedTextField(value = value, onValueChange = onValueChange, modifier = Modifier.weight(0.55f).height(50.dp).semantics { contentDescription = "输入 $label" }, singleLine = true, textStyle = TextStyle(fontSize = 12.sp, textAlign = TextAlign.End))
         } else {
             Text(value, fontWeight = FontWeight.Medium, modifier = Modifier.weight(0.55f), textAlign = TextAlign.End, fontSize = 12.sp)
         }
@@ -678,11 +756,11 @@ fun EditableProfileRow(label: String, value: String, isEditing: Boolean, onRowCl
 @Composable
 fun DropdownProfileRow(label: String, value: String, options: List<String>, isEditing: Boolean, onValueChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Text(label, color = Color.Gray, modifier = Modifier.weight(0.45f), fontSize = 12.sp)
         Box(modifier = Modifier.weight(0.55f), contentAlignment = Alignment.CenterEnd) {
             if (isEditing) {
-                Row(modifier = Modifier.clickable { expanded = true }.padding(8.dp).background(Color(0xFFF1F1F1), RoundedCornerShape(4.dp)).padding(horizontal=8.dp, vertical=4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(modifier = Modifier.clickable(onClickLabel = "选择 $label") { expanded = true }.padding(8.dp).background(Color(0xFFF1F1F1), RoundedCornerShape(4.dp)).padding(horizontal=8.dp, vertical=4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(value, color = Color(0xFF008080), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color(0xFF008080))
                 }
