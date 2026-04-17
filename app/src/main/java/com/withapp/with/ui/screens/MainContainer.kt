@@ -2,6 +2,11 @@
 
 package com.withapp.with.ui.screens
 
+import android.app.Activity
+import android.content.Intent
+import android.speech.RecognizerIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -81,17 +87,24 @@ fun MainContainer(onRequestPermission: () -> Unit = {}) {
 @Composable
 fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHostState) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var inputText by remember { mutableStateOf("") }
     val chatMessages = remember { mutableStateListOf(ChatMessage("嗨！今天感觉如何？随时告诉我你的饮食、运动或心情。\nHi! How are you feeling? Tell me about your food, workout or mood.", false, true)) }
     var showProbe by remember { mutableStateOf(false) }
     var showRabbitInfo by remember { mutableStateOf(false) }
 
-    // 引导式对话流状态机
     var activeFlow by remember { mutableStateOf<String?>(null) }
     var flowStep by remember { mutableStateOf(0) }
     var flowSelection by remember { mutableStateOf("") }
     var wheelMain by remember { mutableStateOf("50") }
     var wheelSub by remember { mutableStateOf("0") }
+
+    val speechLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) { inputText = if (inputText.isBlank()) spokenText else "$inputText $spokenText" }
+        }
+    }
 
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     val dynamicAvatar = when {
@@ -117,7 +130,6 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
     }
 
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA))) {
-
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             Box(modifier = Modifier.size(50.dp).clip(CircleShape).background(Color.White).clickable { showRabbitInfo = true }, contentAlignment = Alignment.Center) { Text(dynamicAvatar, fontSize = 28.sp) }
             Spacer(modifier = Modifier.width(12.dp))
@@ -129,21 +141,11 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
                 Text("🌙 休眠模式已开启 / Vacation Mode ON. Take a rest.", fontSize = 12.sp, color = Color(0xFF2E7D32), modifier = Modifier.padding(12.dp))
             }
         } else {
-            // 全面的结构化记录快捷入口 (四大健康支柱)
             Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                QuickActionChip("🍱 饮食 / Diet", Color(0xFF81C784)) {
-                    activeFlow = "DIET"; flowStep = 1; chatMessages.add(ChatMessage("准备记录饮食。你吃了什么？\nLogging diet. What did you eat?", false, true))
-                }
-                QuickActionChip("🏃 运动 / Workout", Color(0xFF64B5F6)) {
-                    activeFlow = "EXERCISE"; flowStep = 1; chatMessages.add(ChatMessage("准备记录运动。你做了什么？\nLogging workout. What did you do?", false, true))
-                }
-                QuickActionChip("🧘 心情 / Mood", Color(0xFFFFB74D)) {
-                    activeFlow = "MOOD"; flowStep = 1; chatMessages.add(ChatMessage("现在的心情如何？\nHow are you feeling?", false, true))
-                }
-                QuickActionChip("🩸 血糖 / BG", Color(0xFFE57373)) {
-                    activeFlow = "BG"; flowStep = 1; wheelMain = "5"; wheelSub = "5"
-                    chatMessages.add(ChatMessage("准备记录血糖。滑动数值：\nLogging BG. Roll the values:", false, true))
-                }
+                QuickActionChip("🍱 饮食 / Diet", Color(0xFF81C784)) { activeFlow = "DIET"; flowStep = 1; chatMessages.add(ChatMessage("准备记录饮食。你吃了什么？\nLogging diet. What did you eat?", false, true)) }
+                QuickActionChip("🏃 运动 / Workout", Color(0xFF64B5F6)) { activeFlow = "EXERCISE"; flowStep = 1; chatMessages.add(ChatMessage("准备记录运动。你做了什么？\nLogging workout. What did you do?", false, true)) }
+                QuickActionChip("🧘 心情 / Mood", Color(0xFFFFB74D)) { activeFlow = "MOOD"; flowStep = 1; chatMessages.add(ChatMessage("现在的心情如何？\nHow are you feeling?", false, true)) }
+                QuickActionChip("🩸 血糖 / BG", Color(0xFFE57373)) { activeFlow = "BG"; flowStep = 1; wheelMain = "5"; wheelSub = "5"; chatMessages.add(ChatMessage("准备记录血糖。滑动数值：\nLogging BG. Roll the values:", false, true)) }
             }
         }
 
@@ -158,7 +160,6 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
 
         if (showProbe) { ResearchProbeCard { showProbe = false } }
 
-        // 结构化引导输入区 (Guided Input Area)
         if (activeFlow != null && !reportViewModel.userProfile.value.isVacationMode) {
             Column(modifier = Modifier.fillMaxWidth().background(Color.White).padding(16.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -234,7 +235,6 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
                 }
             }
         } else {
-            // 自由输入区 (双语语义解析)
             Row(modifier = Modifier.background(Color.White).padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = inputText, onValueChange = { inputText = it },
@@ -242,7 +242,15 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
                     modifier = Modifier.weight(1f).semantics { contentDescription = "数据对话自由输入框" }, shape = RoundedCornerShape(24.dp),
                     enabled = !reportViewModel.userProfile.value.isVacationMode
                 )
-                IconButton(onClick = { scope.launch { snackbarHostState.showSnackbar("🎙️ 语音输入模块将在未来版本接入") } }) { Icon(Icons.Default.Mic, contentDescription = "Voice", tint = Color.Gray) }
+                IconButton(onClick = {
+                    try {
+                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                            putExtra(RecognizerIntent.EXTRA_PROMPT, "请说话 / Speak now...")
+                        }
+                        speechLauncher.launch(intent)
+                    } catch (e: Exception) { scope.launch { snackbarHostState.showSnackbar("❌ 您的设备未安装语音识别组件") } }
+                }) { Icon(Icons.Default.Mic, null, tint = Color(0xFF008080)) }
                 IconButton(onClick = {
                     if (inputText.isNotBlank()) {
                         val reply = reportViewModel.processChatInput(inputText)
@@ -250,7 +258,7 @@ fun HomeV3View(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHost
                         chatMessages.add(ChatMessage(reply, false, isSupportive = true, canUndo = true))
                         inputText = ""; showProbe = true
                     }
-                }, enabled = !reportViewModel.userProfile.value.isVacationMode) { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = if(reportViewModel.userProfile.value.isVacationMode) Color.LightGray else Color(0xFF008080)) }
+                }, enabled = !reportViewModel.userProfile.value.isVacationMode) { Icon(Icons.AutoMirrored.Filled.Send, null, tint = if(reportViewModel.userProfile.value.isVacationMode) Color.LightGray else Color(0xFF008080)) }
             }
         }
     }
@@ -296,16 +304,8 @@ fun WheelPickerLocal(items: List<String>, initialValue: String, onValueChange: (
 }
 
 @Composable
-fun SuggestionPill(text: String, onClick: () -> Unit) {
-    Surface(onClick = onClick, color = Color.White, shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, Color(0xFF008080).copy(alpha=0.3f)), modifier = Modifier.padding(vertical = 4.dp).semantics { contentDescription = "快捷填入建议: $text" }) {
-        Text(text, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), fontSize = 11.sp, color = Color(0xFF008080), fontWeight = FontWeight.Medium)
-    }
-}
-
-// 💥 修复了语法的终极纯净版 QuickActionChip！
-@Composable
 fun QuickActionChip(label: String, color: Color, onClick: () -> Unit) {
-    Surface(onClick = onClick, color = color.copy(alpha = 0.15f), shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, color.copy(alpha = 0.5f)), modifier = Modifier.semantics { contentDescription = "快捷操作: $label" }) {
+    Surface(onClick = onClick, color = color.copy(alpha = 0.15f), shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, color.copy(alpha = 0.5f))) {
         Text(label, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp, color = color, fontWeight = FontWeight.Bold)
     }
 }
@@ -332,11 +332,11 @@ fun ChatBubble(message: ChatMessage, onUndo: () -> Unit) {
     var hasUndone by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = if (message.isUser) Alignment.End else Alignment.Start) {
-        Box(modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(12.dp)).background(if (message.isUser) Color(0xFF008080) else Color.White).padding(12.dp).semantics { contentDescription = if (message.isUser) "您发送的记录：${message.text}" else "向导回复：${message.text}" }) {
+        Box(modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(12.dp)).background(if (message.isUser) Color(0xFF008080) else Color.White).padding(12.dp)) {
             Text(message.text, color = if (message.isUser) Color.White else Color.Black)
         }
         if (!message.isUser && message.canUndo && !hasUndone) {
-            Text("点击撤销记录 / Recall", fontSize = 10.sp, color = Color.Red, modifier = Modifier.padding(start = 16.dp).clickable(onClickLabel = "撤销上一条系统记录") { onUndo(); hasUndone = true })
+            Text("识别错误？撤销记录 / Undo Error", fontSize = 10.sp, color = Color.Red, modifier = Modifier.padding(start = 16.dp).clickable { onUndo(); hasUndone = true })
         }
         if (!message.isUser && message.isSupportive && !feedbackGiven) {
             Row(modifier = Modifier.padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -372,36 +372,36 @@ fun ProfileView(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHos
 
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F9FA)).verticalScroll(scrollState).padding(24.dp)) {
 
-        Text("关怀与偏好 / Preferences", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3F51B5), modifier = Modifier.semantics { heading() })
+        Text("关怀与偏好 / Preferences", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3F51B5))
         Spacer(Modifier.height(12.dp))
 
-        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp)).padding(12.dp).semantics(mergeDescendants = true) {}) {
+        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp)).padding(12.dp)) {
             Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("🌙 休眠模式 / Vacation Mode", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32), fontSize = 14.sp)
-                    Text("暂停所有图表分析，避免数据焦虑。\nPause all analytics to avoid data anxiety.", fontSize = 10.sp, color = Color.Gray, lineHeight = 14.sp)
+                    Text("暂停图表分析，避免焦虑 / Pause analytics to avoid anxiety", fontSize = 10.sp, color = Color.Gray, lineHeight = 14.sp)
                 }
-                Switch(checked = isVacationMode, onCheckedChange = { isVacationMode = it; reportViewModel.userProfile.value = reportViewModel.userProfile.value.copy(isVacationMode = it) }, modifier = Modifier.semantics { contentDescription = "开启或关闭健康休眠模式" }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF2E7D32), checkedTrackColor = Color(0xFFA5D6A7)))
+                Switch(checked = isVacationMode, onCheckedChange = { isVacationMode = it; reportViewModel.userProfile.value = reportViewModel.userProfile.value.copy(isVacationMode = it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF2E7D32), checkedTrackColor = Color(0xFFA5D6A7)))
             }
         }
 
         Spacer(Modifier.height(8.dp))
-        Row(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8EAF6), RoundedCornerShape(8.dp)).padding(12.dp).padding(vertical = 4.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.fillMaxWidth().background(Color(0xFFE8EAF6), RoundedCornerShape(8.dp)).padding(12.dp).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("隐私掩码 / Privacy Mask", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                Text("在公共场合隐藏敏感数据\nHide sensitive data in public", fontSize = 10.sp, color = Color.Gray)
+                Text("在公共场合隐藏敏感数据 / Hide sensitive data in public", fontSize = 10.sp, color = Color.Gray)
             }
-            Switch(checked = isPrivacyMode, onCheckedChange = { isPrivacyMode = it; reportViewModel.userProfile.value = reportViewModel.userProfile.value.copy(isPrivacyMode = it) }, modifier = Modifier.semantics { contentDescription = "开启或关闭隐私掩码，隐藏敏感数据" }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3F51B5), checkedTrackColor = Color(0xFFC5CAE9)))
+            Switch(checked = isPrivacyMode, onCheckedChange = { isPrivacyMode = it; reportViewModel.userProfile.value = reportViewModel.userProfile.value.copy(isPrivacyMode = it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3F51B5), checkedTrackColor = Color(0xFFC5CAE9)))
         }
 
         Spacer(Modifier.height(8.dp))
-        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFFFF3E0), RoundedCornerShape(8.dp)).padding(12.dp).semantics(mergeDescendants = true) {}) {
+        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFFFF3E0), RoundedCornerShape(8.dp)).padding(12.dp)) {
             Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("🔔 智能打扰 / Smart Alerts", fontWeight = FontWeight.Bold, color = Color(0xFFE65100), fontSize = 14.sp)
-                    Text("根据体征预判，取代定时打扰\nContext-aware push instead of alarms", fontSize = 10.sp, color = Color.Gray, lineHeight = 14.sp)
+                    Text("根据体征预判，取代定时打扰 / Context-aware push", fontSize = 10.sp, color = Color.Gray, lineHeight = 14.sp)
                 }
-                Switch(checked = isContextAwareAlerts, onCheckedChange = { isContextAwareAlerts = it }, modifier = Modifier.semantics { contentDescription = "开启或关闭基于上下文的智能健康打扰机制" }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFE65100), checkedTrackColor = Color(0xFFFFCC80)), enabled = !isVacationMode)
+                Switch(checked = isContextAwareAlerts, onCheckedChange = { isContextAwareAlerts = it }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFE65100), checkedTrackColor = Color(0xFFFFCC80)), enabled = !isVacationMode)
             }
         }
 
@@ -436,7 +436,7 @@ fun ProfileView(reportViewModel: ReportViewModel, snackbarHostState: SnackbarHos
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Security, null, tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("100% 本地端侧加密 / Local Encrypted", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF2E7D32))
+                Text("100% 本地加密 / Local Encrypted", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF2E7D32))
             }
 
             HorizontalDivider(color = Color(0xFFF1F1F1), modifier = Modifier.padding(vertical = 12.dp))

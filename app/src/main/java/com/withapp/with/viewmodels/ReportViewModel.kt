@@ -1,3 +1,4 @@
+
 //
 //package com.withapp.with.viewmodels
 //
@@ -17,15 +18,13 @@
 //    val sd: String, val cv: String, val mage: String, val gmi: String, val tirTarget: Int, val tirHigh: Int, val tirLow: Int,
 //    val tbrLevel1: String, val tbrLevel2: String, val tarLevel1: String, val tarLevel2: String,
 //    val wearTime: String, val completeness: String, val signalLoss: String, val hypoEvents: Int, val hyperEvents: Int, val alertsTriggered: Int,
-//    val clinicalAdvice: String,
-//    val ipsativeTrend: String = "波动率较上周同期下降 12%",
-//    val feedforwardAction: String = "晚餐建议增加 15g 优质蛋白，这将有助于平抑您夜间的血糖波动。"
+//    val clinicalAdvice: String, val ipsativeTrend: String, val feedforwardAction: String
 //)
 //
 //data class ClinicalMoodReport(
 //    val meanScore: String, val medianScore: String, val variabilitySD: String, val instabilityIndex: String,
 //    val positiveAffect: Int, val neutralAffect: Int, val negativeAffect: Int, val phq9Score: String, val gad7Score: String, val pssScore: String,
-//    val ipsativeTrend: String = "情绪稳定性较上月提升 8%"
+//    val ipsativeTrend: String
 //)
 //
 //data class UserProfile(
@@ -36,7 +35,7 @@
 //)
 //
 //class ReportViewModel : ViewModel() {
-//    var currentScale = mutableStateOf("日 (Day)")
+//    var currentScale = mutableStateOf("日 / Day")
 //
 //    val dietLogs = mutableStateListOf<DietEntry>()
 //    val exerciseLogs = mutableStateListOf<ExerciseEntry>()
@@ -47,14 +46,16 @@
 //    private var lastActionType = ""
 //
 //    var cgmReport = mutableStateOf(ClinicalCgmReport(
-//        deviceInfo = "With v16 Final | 3min/次", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
+//        deviceInfo = "With v21 Final | 3min", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
 //        sd = "1.2", cv = "18.7% (<36%)", mage = "2.1", gmi = "6.1%", tirTarget = 92, tirHigh = 5, tirLow = 3,
 //        tbrLevel1 = "2%", tbrLevel2 = "1% (<3.0)", tarLevel1 = "4%", tarLevel2 = "1% (>13.9)",
 //        wearTime = "98%", completeness = "99.5%", signalLoss = "15 min", hypoEvents = 1, hyperEvents = 2, alertsTriggered = 3,
-//        clinicalAdvice = "今日血糖极佳，TIR 达标。趋势平稳，无需调整。"
+//        clinicalAdvice = "今日血糖极佳，无需调整。 / Excellent BG today, no adjustment needed.",
+//        ipsativeTrend = "波动率较上周下降 12% / Var. decreased 12% vs last week",
+//        feedforwardAction = "晚餐增加15g蛋白，平抑夜间波动。 / Add 15g protein at dinner for night stability."
 //    ))
-//    var moodReport = mutableStateOf(ClinicalMoodReport("7.5", "7.8", "0.9", "Low", 70, 20, 10, "2 (极轻)", "3 (极轻)", "12 (轻度)"))
-//    var userProfile = mutableStateOf(UserProfile("28 岁", "女", "175 cm", "70 kg", "2023/05", "是", "二甲双胍", "3.9 - 10.0", "6.2 %", "餐后30分", "每天3次", false, true, false))
+//    var moodReport = mutableStateOf(ClinicalMoodReport("7.5", "7.8", "0.9", "Low", 70, 20, 10, "2 (极轻/Mild)", "3 (极轻/Mild)", "12 (轻度/Mild)", "情绪稳定性提升 8% / Mood stability up 8%"))
+//    var userProfile = mutableStateOf(UserProfile("28", "女/Female", "175 cm", "70 kg", "2023/05", "是/Yes", "二甲双胍/Metformin", "3.9 - 10.0", "6.2 %", "餐后30分/30m Post-meal", "每天3次/3x Day", false, true, false))
 //
 //    init {
 //        cgmNodes.addAll(listOf(
@@ -72,68 +73,67 @@
 //            CgmNode("22:00", 5.7, "↘", "3min", "-0.02"), CgmNode("22:30", 5.6, "↘", "3min", "-0.01"), CgmNode("23:00", 5.5, "↘", "3min", "-0.01"), CgmNode("23:30", 5.4, "↘", "3min", "-0.01")
 //        ))
 //        moodNodes.addAll(listOf(
-//            MoodLog("06:00", "平稳", "晨起", 6.5f), MoodLog("07:00", "极佳", "早餐前", 8.0f), MoodLog("08:00", "极佳", "早餐后", 8.5f), MoodLog("09:00", "平稳", "工作", 7.0f),
-//            MoodLog("10:00", "压力", "会议", 5.5f), MoodLog("11:00", "疲惫", "高耗能", 4.5f), MoodLog("12:00", "低落", "餐前饥饿", 4.0f), MoodLog("13:00", "极佳", "午餐满意", 9.0f),
-//            MoodLog("14:00", "平稳", "午后", 7.5f), MoodLog("15:00", "疲惫", "犯困", 5.0f), MoodLog("16:00", "烦躁", "工作堆积", 4.5f), MoodLog("17:00", "低落", "下班前", 4.0f),
-//            MoodLog("18:00", "开心", "离开公司", 8.0f), MoodLog("19:00", "极佳", "晚餐后", 9.5f), MoodLog("20:00", "平稳", "休息", 7.5f), MoodLog("21:00", "平静", "阅读", 8.0f),
-//            MoodLog("22:00", "平稳", "洗漱", 7.0f), MoodLog("23:00", "平静", "准备入睡", 7.5f)
+//            MoodLog("06:00", "平稳/Calm", "晨起", 6.5f), MoodLog("07:00", "极佳/Great", "早餐前", 8.0f), MoodLog("08:00", "极佳/Great", "早餐后", 8.5f), MoodLog("09:00", "平稳/Calm", "工作", 7.0f),
+//            MoodLog("10:00", "压力/Stress", "会议", 5.5f), MoodLog("11:00", "疲惫/Tired", "高耗能", 4.5f), MoodLog("12:00", "低落/Down", "餐前饥饿", 4.0f), MoodLog("13:00", "极佳/Great", "午餐满意", 9.0f),
+//            MoodLog("14:00", "平稳/Calm", "午后", 7.5f), MoodLog("15:00", "疲惫/Tired", "犯困", 5.0f), MoodLog("16:00", "烦躁/Anxious", "工作", 4.5f), MoodLog("17:00", "低落/Down", "下班前", 4.0f),
+//            MoodLog("18:00", "开心/Happy", "离开公司", 8.0f), MoodLog("19:00", "极佳/Great", "晚餐后", 9.5f), MoodLog("20:00", "平稳/Calm", "休息", 7.5f), MoodLog("21:00", "平静/Peace", "阅读", 8.0f),
+//            MoodLog("22:00", "平稳/Calm", "洗漱", 7.0f), MoodLog("23:00", "平静/Peace", "准备入睡", 7.5f)
 //        ))
-//        dietLogs.addAll(listOf(DietEntry("08:30", "全麦面包", "30g", 30f), DietEntry("12:30", "沙拉", "15g", 15f)))
-//        exerciseLogs.addAll(listOf(ExerciseEntry("09:00", "慢跑", "20min", 20f), ExerciseEntry("18:00", "拉伸", "15min", 15f)))
-//        hrLogs.addAll(listOf(HeartRateEntry("08:00", 72, "静息"), HeartRateEntry("19:00", 110, "运动")))
+//        dietLogs.addAll(listOf(DietEntry("08:30", "全麦面包/Bread", "30g", 30f), DietEntry("12:30", "沙拉/Salad", "15g", 15f)))
+//        exerciseLogs.addAll(listOf(ExerciseEntry("09:00", "慢跑/Running", "20min", 20f), ExerciseEntry("18:00", "拉伸/Stretching", "15min", 15f)))
+//        hrLogs.addAll(listOf(HeartRateEntry("08:00", 72, "静息/Resting"), HeartRateEntry("19:00", 110, "运动/Active")))
 //    }
 //
 //    fun processChatInput(input: String): String {
 //        val timeMatch = Regex("([0-1]?[0-9]|2[0-3]):([0-5][0-9])").find(input)?.value
 //        val time = timeMatch ?: java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-//        val inputCleaned = if (timeMatch != null) input.replace(timeMatch, "") else input
+//        val inputCleaned = if (timeMatch != null) input.replace(timeMatch, "") else input.lowercase()
 //        val extractedNumber = Regex("(\\d+\\.\\d+|\\d+)").find(inputCleaned)?.value?.toFloatOrNull()
 //
-//        if (Regex("身高|多高").containsMatchIn(inputCleaned)) {
+//        if (Regex("身高|多高|height|tall").containsMatchIn(inputCleaned)) {
 //            val h = extractedNumber?.toInt() ?: 175
 //            userProfile.value = userProfile.value.copy(height = "$h cm")
 //            lastActionType = "profile"
-//            return "✅ 已识别为个人档案信息！您的身高已自动更新为 $h cm，您可在『档案』页查看。"
+//            return "✅ 档案更新/Profile Updated！身高/Height: $h cm"
 //        }
-//        if (Regex("体重|多重").containsMatchIn(inputCleaned)) {
+//        if (Regex("体重|多重|weight|heavy").containsMatchIn(inputCleaned)) {
 //            val w = extractedNumber?.toInt() ?: 70
 //            userProfile.value = userProfile.value.copy(weight = "$w kg")
 //            lastActionType = "profile"
-//            return "✅ 已识别为个人档案信息！您的体重已自动更新为 $w kg，您可在『档案』页查看。"
+//            return "✅ 档案更新/Profile Updated！体重/Weight: $w kg"
 //        }
 //
 //        var matchedSomething = false
 //
-//        if (Regex("血糖|低血糖|高血糖|测了|mmol").containsMatchIn(inputCleaned)) {
+//        if (Regex("血糖|低血糖|高血糖|测了|mmol|bg|glucose|blood sugar").containsMatchIn(inputCleaned)) {
 //            val bgValue = extractedNumber?.toDouble() ?: 5.5
 //            if (bgValue > 15.0 || bgValue < 3.9) {
-//                addCgmNode(bgValue, time)
-//                lastActionType = "cgm"
-//                return "⚠️ 警报：检测到您的血糖值 ($bgValue mmol/L) 严重偏离目标范围。数据已暂存，但请务必立即关注身体状态，必要时请就医！(误输入请点击下方撤销)"
+//                addCgmNode(bgValue, time); lastActionType = "cgm"
+//                return "⚠️ 警报/Alert：血糖异常/Abnormal BG ($bgValue mmol/L)。请注意身体状态，必要时就医！\nCheck your status and seek medical advice if needed! (误输请撤销/Undo if error)"
 //            }
 //            addCgmNode(bgValue, time); lastActionType = "cgm"; matchedSomething = true
 //        }
-//        else if (Regex("胰岛素|打针|单位|U").containsMatchIn(inputCleaned)) { val units = extractedNumber ?: 2f; dietLogs.add(0, DietEntry(time, "注射胰岛素", "${units} U", units)); lastActionType = "diet"; matchedSomething = true }
-//        else if (Regex("吃|餐|饭|饮食|碳水").containsMatchIn(inputCleaned)) { val carbs = extractedNumber ?: 40f; dietLogs.add(0, DietEntry(time, inputCleaned, "约 ${carbs}g", carbs)); lastActionType = "diet"; matchedSomething = true }
-//        else if (Regex("跑|步|运动|锻炼|健身|游泳|骑车").containsMatchIn(inputCleaned)) { val duration = extractedNumber ?: 30f; exerciseLogs.add(0, ExerciseEntry(time, inputCleaned, "${duration}min", duration)); lastActionType = "exercise"; matchedSomething = true }
-//        else if (Regex("心率|心跳|bpm|BPM").containsMatchIn(inputCleaned)) { hrLogs.add(0, HeartRateEntry(time, extractedNumber?.toInt() ?: 85, "自动识别")); lastActionType = "hr"; matchedSomething = true }
+//        else if (Regex("胰岛素|打针|单位|u|insulin").containsMatchIn(inputCleaned)) { val units = extractedNumber ?: 2f; dietLogs.add(0, DietEntry(time, "胰岛素/Insulin", "${units} U", units)); lastActionType = "diet"; matchedSomething = true }
+//        else if (Regex("吃|餐|饭|饮食|碳水|food|eat|ate|meal|carbs").containsMatchIn(inputCleaned)) { val carbs = extractedNumber ?: 40f; dietLogs.add(0, DietEntry(time, inputCleaned.take(10), "约 ${carbs}g", carbs)); lastActionType = "diet"; matchedSomething = true }
+//        else if (Regex("跑|步|运动|锻炼|健身|游泳|骑车|run|exercise|workout|swim|bike").containsMatchIn(inputCleaned)) { val duration = extractedNumber ?: 30f; exerciseLogs.add(0, ExerciseEntry(time, inputCleaned.take(10), "${duration}min", duration)); lastActionType = "exercise"; matchedSomething = true }
+//        else if (Regex("心率|心跳|bpm|heart rate|hr").containsMatchIn(inputCleaned)) { hrLogs.add(0, HeartRateEntry(time, extractedNumber?.toInt() ?: 85, "Auto")); lastActionType = "hr"; matchedSomething = true }
 //
-//        val moodKeywords = Regex("心情|情绪|感觉|状态|开心|高兴|爽|好|难过|生气|郁闷|压力|累|烦|平稳|平静|差|低落")
+//        val moodKeywords = Regex("心情|情绪|感觉|状态|开心|高兴|爽|好|难过|生气|郁闷|压力|累|烦|平稳|平静|差|低落|mood|feel|happy|sad|angry|stress|tired|calm|bad")
 //        if (moodKeywords.containsMatchIn(inputCleaned) || !matchedSomething) {
 //            val score = when {
-//                Regex("极佳|特别好|开心|高兴|爽").containsMatchIn(inputCleaned) -> 8.5f
-//                Regex("难过|生气|郁闷|烦|差|压力|累|低落|糟").containsMatchIn(inputCleaned) -> 3.5f
-//                Regex("平稳|平静|还行|不错|好").containsMatchIn(inputCleaned) -> 7.0f
+//                Regex("极佳|开心|高兴|爽|happy|great|excellent|awesome").containsMatchIn(inputCleaned) -> 8.5f
+//                Regex("难过|生气|郁闷|烦|差|压力|累|低落|糟|sad|angry|stress|tired|bad|down").containsMatchIn(inputCleaned) -> 3.5f
+//                Regex("平稳|平静|还行|不错|好|calm|peace|ok|good|fine").containsMatchIn(inputCleaned) -> 7.0f
 //                else -> extractedNumber ?: 6.5f
 //            }
-//            val customLabel = if (inputCleaned.length > 8) inputCleaned.substring(0, 8) + "..." else inputCleaned
-//            addMoodNode(score, if (score >= 8f) "极佳: $customLabel" else if (score <= 4f) "低落: $customLabel" else "平稳: $customLabel", time)
+//            val customLabel = if (inputCleaned.length > 10) inputCleaned.substring(0, 10) + "..." else inputCleaned
+//            addMoodNode(score, if (score >= 8f) "极佳/Great: $customLabel" else if (score <= 4f) "低落/Down: $customLabel" else "平稳/Calm: $customLabel", time)
 //            lastActionType = "mood"
 //
-//            if (score <= 4f) { return "收到你的记录。看起来此刻有些艰难，请允许自己深呼吸三次 🌬️。无论发生什么，我都在这里陪你。你需要休息一下吗？" }
-//            else if (score >= 8f) { return "太棒了！🤩 记录已保存。能感觉到你现在充满了能量！愿意花一秒钟回想一下，今天是什么具体的事情让你这么开心吗？（这有助于巩固积极记忆哦）" }
+//            if (score <= 4f) { return "收到/Noted. 看起来有些艰难，请深呼吸三次 🌬️ / Take 3 deep breaths. 我在这里陪你 / I'm here for you." }
+//            else if (score >= 8f) { return "太棒了/Awesome! 🤩 回想一下是什么让你这么开心？ / Think about what made you so happy today! (巩固积极记忆/Savor the moment)" }
 //        }
-//        return "🎉 记录成功！干得漂亮，每一次记录都是在为健康投资。数据已整理至『回顾』中。"
+//        return "🎉 记录成功！/ Saved! 数据已整理至回顾中 / Data synced to Report."
 //    }
 //
 //    fun undoLastAction(): String {
@@ -143,14 +143,14 @@
 //            "diet" -> if (dietLogs.isNotEmpty()) dietLogs.removeAt(0)
 //            "exercise" -> if (exerciseLogs.isNotEmpty()) exerciseLogs.removeAt(0)
 //            "hr" -> if (hrLogs.isNotEmpty()) hrLogs.removeAt(0)
-//            else -> return "没有可以撤销的操作。"
+//            else -> return "没有可撤销的操作。 / Nothing to undo."
 //        }
 //        lastActionType = ""
-//        return "↩️ 已成功撤销上一次的智能提取记录。"
+//        return "↩️ 已撤销 / Action Undone."
 //    }
 //
 //    fun addCgmNode(bg: Double, timeInput: String) { cgmNodes.add(CgmNode(timeInput.ifBlank { java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) }, bg, "↗", "3min", "+0.00")) }
-//    fun addMoodNode(score: Float, label: String, timeInput: String) { moodNodes.add(MoodLog(timeInput.ifBlank { java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) }, label, "手动记录", score)) }
+//    fun addMoodNode(score: Float, label: String, timeInput: String) { moodNodes.add(MoodLog(timeInput.ifBlank { java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) }, label, "Manual", score)) }
 //}
 
 package com.withapp.with.viewmodels
@@ -199,13 +199,13 @@ class ReportViewModel : ViewModel() {
     private var lastActionType = ""
 
     var cgmReport = mutableStateOf(ClinicalCgmReport(
-        deviceInfo = "With v20 Global | 3min", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
+        deviceInfo = "With vFinal | 3min", dataCoverage = "99%", avgGlucose = "6.4 mmol/L", medianGlucose = "6.2 mmol/L", percentiles = "IQR: 4.8-7.5",
         sd = "1.2", cv = "18.7% (<36%)", mage = "2.1", gmi = "6.1%", tirTarget = 92, tirHigh = 5, tirLow = 3,
         tbrLevel1 = "2%", tbrLevel2 = "1% (<3.0)", tarLevel1 = "4%", tarLevel2 = "1% (>13.9)",
         wearTime = "98%", completeness = "99.5%", signalLoss = "15 min", hypoEvents = 1, hyperEvents = 2, alertsTriggered = 3,
-        clinicalAdvice = "今日血糖极佳，无需调整。 / Excellent BG today, no adjustment needed.",
+        clinicalAdvice = "今日血糖极佳，无需调整。/ Excellent BG, no adjustment needed.",
         ipsativeTrend = "波动率较上周下降 12% / Var. decreased 12% vs last week",
-        feedforwardAction = "晚餐增加15g蛋白，平抑夜间波动。 / Add 15g protein at dinner for night stability."
+        feedforwardAction = "晚餐增加15g蛋白，平抑夜间波动。/ Add 15g protein at dinner for night stability."
     ))
     var moodReport = mutableStateOf(ClinicalMoodReport("7.5", "7.8", "0.9", "Low", 70, 20, 10, "2 (极轻/Mild)", "3 (极轻/Mild)", "12 (轻度/Mild)", "情绪稳定性提升 8% / Mood stability up 8%"))
     var userProfile = mutableStateOf(UserProfile("28", "女/Female", "175 cm", "70 kg", "2023/05", "是/Yes", "二甲双胍/Metformin", "3.9 - 10.0", "6.2 %", "餐后30分/30m Post-meal", "每天3次/3x Day", false, true, false))
@@ -243,18 +243,17 @@ class ReportViewModel : ViewModel() {
         val inputCleaned = if (timeMatch != null) input.replace(timeMatch, "") else input.lowercase()
         val extractedNumber = Regex("(\\d+\\.\\d+|\\d+)").find(inputCleaned)?.value?.toFloatOrNull()
 
-        // 🆕 V20 国际化：全面支持中英文双语正则表达式识别
         if (Regex("身高|多高|height|tall").containsMatchIn(inputCleaned)) {
             val h = extractedNumber?.toInt() ?: 175
             userProfile.value = userProfile.value.copy(height = "$h cm")
             lastActionType = "profile"
-            return "✅ 档案更新/Profile Updated！身高/Height: $h cm"
+            return "✅ 档案更新 / Profile Updated！身高 / Height: $h cm"
         }
         if (Regex("体重|多重|weight|heavy").containsMatchIn(inputCleaned)) {
             val w = extractedNumber?.toInt() ?: 70
             userProfile.value = userProfile.value.copy(weight = "$w kg")
             lastActionType = "profile"
-            return "✅ 档案更新/Profile Updated！体重/Weight: $w kg"
+            return "✅ 档案更新 / Profile Updated！体重 / Weight: $w kg"
         }
 
         var matchedSomething = false
@@ -263,7 +262,7 @@ class ReportViewModel : ViewModel() {
             val bgValue = extractedNumber?.toDouble() ?: 5.5
             if (bgValue > 15.0 || bgValue < 3.9) {
                 addCgmNode(bgValue, time); lastActionType = "cgm"
-                return "⚠️ 警报/Alert：血糖异常/Abnormal BG ($bgValue mmol/L)。请注意身体状态，必要时就医！\nCheck your status and seek medical advice if needed! (误输请撤销/Undo if error)"
+                return "⚠️ 警报/Alert：血糖异常/Abnormal BG ($bgValue mmol/L)。请注意身体状态，必要时就医！\nCheck your status and seek medical advice! (误输请撤销/Undo if error)"
             }
             addCgmNode(bgValue, time); lastActionType = "cgm"; matchedSomething = true
         }
@@ -284,10 +283,10 @@ class ReportViewModel : ViewModel() {
             addMoodNode(score, if (score >= 8f) "极佳/Great: $customLabel" else if (score <= 4f) "低落/Down: $customLabel" else "平稳/Calm: $customLabel", time)
             lastActionType = "mood"
 
-            if (score <= 4f) { return "收到/Noted. 看起来有些艰难，请深呼吸三次 🌬️ / Take 3 deep breaths. 我在这里陪你 / I'm here for you." }
-            else if (score >= 8f) { return "太棒了/Awesome! 🤩 回想一下是什么让你这么开心？ / Think about what made you so happy today! (巩固积极记忆/Savor the moment)" }
+            if (score <= 4f) { return "收到 / Noted. 看起来有些艰难，请深呼吸三次 🌬️ / Take 3 deep breaths. 我在这里陪你 / I'm here for you." }
+            else if (score >= 8f) { return "太棒了 / Awesome! 🤩 回想一下是什么让你这么开心？ / Think about what made you so happy today! (巩固积极记忆/Savor the moment)" }
         }
-        return "🎉 记录成功！/ Saved! 数据已整理至回顾中 / Data synced to Report."
+        return "🎉 记录成功 / Saved! 数据已整理至回顾中 / Data synced to Report."
     }
 
     fun undoLastAction(): String {
